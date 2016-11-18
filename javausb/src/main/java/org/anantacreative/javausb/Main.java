@@ -1,261 +1,200 @@
 package org.anantacreative.javausb;
 
-import javax.usb.*;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
+import org.usb4java.*;
 
 /**
  * Created by anama on 20.10.16.
  */
 public class Main {
 
-    public static void main(String[] args) {
-        try {
-
-            final UsbServices services = UsbHostManager.getUsbServices();
-
-            // Dump the root USB hub
-            processDevice(services.getRootUsbHub());
-
-
-/*
-            UsbServices services = UsbHostManager.getUsbServices();
-            dump(services.getRootUsbHub(), 0);
-
-
-            // Get the USB services and dump information about them
-            final UsbServices services = UsbHostManager.getUsbServices();
-            System.out.println("USB Service Implementation: "
-                    + services.getImpDescription());
-            System.out.println("Implementation version: "
-                    + services.getImpVersion());
-            System.out.println("Service API version: " + services.getApiVersion());
-            System.out.println();
-
-            // Dump the root USB hub
-            dumpDevice(services.getRootUsbHub());
-
-
-         allDevices(getRootUSBHub());
-
-            allUsbHub(getRootUSBHub()).forEach(usbHub -> {
-                UsbDeviceDescriptor desc = usbHub.getUsbDeviceDescriptor();
-                System.out.println(desc.idVendor());
-
-            });
-            */
-        } catch (UsbException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
-
-    public static UsbHub getRootUSBHub() throws UsbException {
-       return  UsbHostManager.getUsbServices().getRootUsbHub();
-    }
-
-    public static  void allDevices(UsbHub hub) throws UsbException {
-
-        List<UsbDevice> attachedUsbDevices = hub.getAttachedUsbDevices();
-
-        for (UsbDevice usbDevice : attachedUsbDevices) {
-
-            if (usbDevice.isUsbHub())
-            {
-                allDevices((UsbHub) usbDevice);
-            }
-
-            UsbDeviceDescriptor desc = usbDevice.getUsbDeviceDescriptor();
-            System.out.print(" "+desc.idVendor());
-            System.out.print(" "+desc.iManufacturer());
-            System.out.println(" "+desc.idProduct());
-
-        }
-    }
-
-
-
-    public static  List<UsbHub> allUsbHub(UsbHub rootHub) throws UsbException {
-
-        List<UsbHub> res=new ArrayList<>();
-
-        List<UsbDevice> attachedUsbDevices = rootHub.getAttachedUsbDevices();
-
-        for (UsbDevice usbDevice : attachedUsbDevices) {
-
-            if (usbDevice.isUsbHub())
-            {
-                res.add((UsbHub)usbDevice);
-                //res.addAll(allUsbHub((UsbHub) usbDevice));
-            }
-
-        }
-
-
-return res;
-
-
-
-    }
-
-    public static UsbDevice findDevice(UsbHub hub, short vendorId, short productId)
-    {
-        for (UsbDevice device : (List<UsbDevice>) hub.getAttachedUsbDevices())
-        {
-            UsbDeviceDescriptor desc = device.getUsbDeviceDescriptor();
-            if (desc.idVendor() == vendorId && desc.idProduct() == productId) return device;
-            if (device.isUsbHub())
-            {
-                device = findDevice((UsbHub) device, vendorId, productId);
-                if (device != null) return device;
-            }
-        }
-        return null;
-    }
+    private static short vendorId=(short)0xfc58;
+    private static short productId=(short)0x0001;
 
     /**
-     * Dumps the specified USB device to stdout.
-     *
-     * @param device
-     *            The USB device to dump.
-     */
-    private static void dumpDevice(final UsbDevice device)
-    {
-        // Dump information about the device itself
-        System.out.println(device);
-        final UsbPort port = device.getParentUsbPort();
-        if (port != null)
-        {
-            System.out.println("Connected to port: " + port.getPortNumber());
-            System.out.println("Parent: " + port.getUsbHub());
-        }
-
-        // Dump device descriptor
-        System.out.println(device.getUsbDeviceDescriptor());
-
-        // Process all configurations
-        for (UsbConfiguration configuration: (List<UsbConfiguration>) device
-                .getUsbConfigurations())
-        {
-            // Dump configuration descriptor
-            System.out.println(configuration.getUsbConfigurationDescriptor());
-
-            // Process all interfaces
-            for (UsbInterface iface: (List<UsbInterface>) configuration
-                    .getUsbInterfaces())
-            {
-                // Dump the interface descriptor
-                System.out.println(iface.getUsbInterfaceDescriptor());
-
-                // Process all endpoints
-                for (UsbEndpoint endpoint: (List<UsbEndpoint>) iface
-                        .getUsbEndpoints())
-                {
-                    // Dump the endpoint descriptor
-                    System.out.println(endpoint.getUsbEndpointDescriptor());
-                }
-            }
-        }
-
-        System.out.println();
-
-        // Dump child devices if device is a hub
-        if (device.isUsbHub())
-        {
-            final UsbHub hub = (UsbHub) device;
-            for (UsbDevice child: (List<UsbDevice>) hub.getAttachedUsbDevices())
-            {
-                dumpDevice(child);
-            }
-        }
-    }
-
-    /**
-     * Dumps the specified device and its sub devices.
-     *
-     * @param device
-     *            The USB device to dump.
-     * @param level
-     *            The indentation level.
-     */
-    public static void dump(UsbDevice device, int level)
-    {
-        for (int i = 0; i < level; i += 1)
-            System.out.print("  ");
-        System.out.println(device);
-        if (device.isUsbHub())
-        {
-            final UsbHub hub = (UsbHub) device;
-            for (UsbDevice child: (List<UsbDevice>) hub.getAttachedUsbDevices())
-            {
-                dump(child, level + 1);
-            }
-        }
-    }
-
-
-
-    /**
-     * Dumps the name of the specified device to stdout.
+     * Dumps all configuration descriptors of the specified device. Because
+     * libusb descriptors are connected to each other (Configuration descriptor
+     * references interface descriptors which reference endpoint descriptors)
+     * dumping a configuration descriptor also dumps all interface and endpoint
+     * descriptors in this configuration.
      *
      * @param device
      *            The USB device.
-     * @throws UnsupportedEncodingException
-     *             When string descriptor could not be parsed.
-     * @throws UsbException
-     *             When string descriptor could not be read.
+     * @param numConfigurations
+     *            The number of configurations to dump (Read from the device
+     *            descriptor)
      */
-    private static void dumpName(final UsbDevice device)
-            throws UnsupportedEncodingException, UsbException
+    public static void dumpConfigurationDescriptors(final Device device,
+                                                    final int numConfigurations)
     {
-        // Read the string descriptor indices from the device descriptor.
-        // If they are missing then ignore the device.
-        final UsbDeviceDescriptor desc = device.getUsbDeviceDescriptor();
-        final byte iManufacturer = desc.iManufacturer();
-        final byte iProduct = desc.iProduct();
-        if (iManufacturer == 0 || iProduct == 0) return;
-
-        // Dump the device name
-        System.out.println(device.getString(iManufacturer) + " "
-                + device.getString(iProduct));
+        for (byte i = 0; i < numConfigurations; i += 1)
+        {
+            final ConfigDescriptor descriptor = new ConfigDescriptor();
+            final int result = LibUsb.getConfigDescriptor(device, i, descriptor);
+            if (result < 0)
+            {
+                throw new LibUsbException("Unable to read config descriptor",
+                        result);
+            }
+            try
+            {
+                System.out.println(descriptor.dump().replaceAll("(?m)^",
+                        "  "));
+            }
+            finally
+            {
+                // Ensure that the config descriptor is freed
+                LibUsb.freeConfigDescriptor(descriptor);
+            }
+        }
     }
 
     /**
-     * Processes the specified USB device.
+     * Dumps the specified device to stdout.
      *
      * @param device
-     *            The USB device to process.
+     *            The device to dump.
      */
-    private static void processDevice(final UsbDevice device)
+    public static void dumpDevice(final Device device)
     {
-        // When device is a hub then process all child devices
-        if (device.isUsbHub())
+        // Dump device address and bus number
+        final int address = LibUsb.getDeviceAddress(device);
+        final int busNumber = LibUsb.getBusNumber(device);
+        System.out.println(String
+                .format("Device %03d/%03d", busNumber, address));
+
+        // Dump port number if available
+        final int portNumber = LibUsb.getPortNumber(device);
+        if (portNumber != 0)
+            System.out.println("Connected to port: " + portNumber);
+
+        // Dump parent device if available
+        final Device parent = LibUsb.getParent(device);
+        if (parent != null)
         {
-            final UsbHub hub = (UsbHub) device;
-            for (UsbDevice child: (List<UsbDevice>) hub.getAttachedUsbDevices())
-            {
-                processDevice(child);
-            }
+            final int parentAddress = LibUsb.getDeviceAddress(parent);
+            final int parentBusNumber = LibUsb.getBusNumber(parent);
+            System.out.println(String.format("Parent: %03d/%03d",
+                    parentBusNumber, parentAddress));
         }
 
-        // When device is not a hub then dump its name.
-        else
+        // Dump the device speed
+        System.out.println("Speed: "
+                + DescriptorUtils.getSpeedName(LibUsb.getDeviceSpeed(device)));
+
+        // Read the device descriptor
+        final DeviceDescriptor descriptor = new DeviceDescriptor();
+        int result = LibUsb.getDeviceDescriptor(device, descriptor);
+        if (result < 0)
         {
-            try
+            throw new LibUsbException("Unable to read device descriptor",
+                    result);
+        }
+
+        // Try to open the device. This may fail because user has no
+        // permission to communicate with the device. This is not
+        // important for the dumps, we are just not able to resolve string
+        // descriptor numbers to strings in the descriptor dumps.
+        DeviceHandle handle = new DeviceHandle();
+        result = LibUsb.open(device, handle);
+        if (result < 0)
+        {
+            System.out.println(String.format("Unable to open device: %s. "
+                            + "Continuing without device handle.",
+                    LibUsb.strError(result)));
+            handle = null;
+        }
+
+        // Dump the device descriptor
+        System.out.print(descriptor.dump(handle));
+
+        // Dump all configuration descriptors
+        dumpConfigurationDescriptors(device, descriptor.bNumConfigurations());
+
+        // Close the device if it was opened
+        if (handle != null)
+        {
+            LibUsb.close(handle);
+        }
+    }
+
+    /**
+     * Main method.
+     *
+     * @param args
+     *            Command-line arguments (Ignored)
+     */
+    public static void main(final String[] args)
+    {
+        // Create the libusb context
+        final Context context = new Context();
+
+        // Initialize the libusb context
+        int result = LibUsb.init(context);
+        if (result < 0)
+        {
+            throw new LibUsbException("Unable to initialize libusb", result);
+        }
+
+        // Read the USB device list
+        final DeviceList list = new DeviceList();
+        result = LibUsb.getDeviceList(context, list);
+        if (result < 0)
+        {
+            throw new LibUsbException("Unable to get device list", result);
+        }
+
+        try
+        {
+            // Iterate over all devices and dump them
+            for (Device device: list)
             {
-                dumpName(device);
-            }
-            catch (Exception e)
-            {
-                // On Linux this can fail because user has no write permission
-                // on the USB device file. On Windows it can fail because
-                // no libusb device driver is installed for the device
-                System.err.println("Ignoring problematic device: " + e);
+                DeviceDescriptor descriptor = new DeviceDescriptor();
+                result = LibUsb.getDeviceDescriptor(device, descriptor);
+                if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to read device descriptor", result);
+                if (descriptor.idVendor() == vendorId && descriptor.idProduct() == productId)
+                {
+                    dumpDevice(device);
+                    break;
+                }
+
             }
         }
+        finally
+        {
+            // Ensure the allocated device list is freed
+            LibUsb.freeDeviceList(list, true);
+        }
+
+        // Deinitialize the libusb context
+        LibUsb.exit(context);
+    }
+
+    public Device findDevice(short vendorId, short productId)
+    {
+        // Read the USB device list
+        DeviceList list = new DeviceList();
+        int result = LibUsb.getDeviceList(null, list);
+        if (result < 0) throw new LibUsbException("Unable to get device list", result);
+
+        try
+        {
+            // Iterate over all devices and scan for the right one
+            for (Device device: list)
+            {
+                DeviceDescriptor descriptor = new DeviceDescriptor();
+                result = LibUsb.getDeviceDescriptor(device, descriptor);
+                if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to read device descriptor", result);
+                if (descriptor.idVendor() == vendorId && descriptor.idProduct() == productId) return device;
+            }
+        }
+        finally
+        {
+            // Ensure the allocated device list is freed
+            LibUsb.freeDeviceList(list, true);
+        }
+
+        // Device not found
+        return null;
     }
 }
 
