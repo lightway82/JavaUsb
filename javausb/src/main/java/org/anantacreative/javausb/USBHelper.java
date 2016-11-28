@@ -3,6 +3,9 @@ package org.anantacreative.javausb;
 import org.usb4java.*;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -250,6 +253,133 @@ public class USBHelper{
     }
 
 
+static class USBDeviceHandle{
+    private DeviceHandle handle;
+    private boolean needDetach;
+
+    public USBDeviceHandle(DeviceHandle handle, boolean needDetach) {
+        this.handle = handle;
+        this.needDetach = needDetach;
+    }
+
+    public DeviceHandle getHandle() {
+        return handle;
+    }
+
+    public boolean isNeedDetach() {
+        return needDetach;
+    }
+}
+
+
+
+    /**
+     * Открывает устройство для чтения и записи.
+     * После завершения работы необходимо вызвать closeDevice(USBDeviceHandle handle, int interfaceNum)
+     * @param pid
+     * @param vid
+     * @param interfaceNum номер интерфейса
+     * @return
+     */
+    public static USBDeviceHandle openDevice(int pid, int vid, int interfaceNum){
+        DeviceHandle handle = LibUsb.openDeviceWithVidPid(context, (short)vid,
+                (short)pid);
+
+        if (handle == null)
+        {
+            System.err.println("Test device not found.");
+            System.exit(1);
+        }
+
+        boolean detach = LibUsb.hasCapability(LibUsb.CAP_SUPPORTS_DETACH_KERNEL_DRIVER)
+                && LibUsb.kernelDriverActive(handle, interfaceNum)==1;
+
+// Detach the kernel driver
+        if (LibUsb.kernelDriverActive(handle, interfaceNum)==1)
+        {
+            int result = LibUsb.detachKernelDriver(handle,  interfaceNum);
+            if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to detach kernel driver", result);
+        }
+
+
+        // Claim the ADB interface
+        int result = LibUsb.claimInterface(handle, interfaceNum);
+        if (result != LibUsb.SUCCESS)
+        {
+            throw new LibUsbException("Unable to claim interface", result);
+        }
+        USBDeviceHandle usbDeviceHandle=new USBDeviceHandle(handle,detach);
+
+        return usbDeviceHandle;
+    }
+
+    /**
+     * Закрывает устройство. Освобождает ресурсы
+     * @param handle  USBDeviceHandle полученый при открытии устройства
+     * @param interfaceNum  номер интерфейса, который открывался
+     */
+    public static void closeDevice(USBDeviceHandle handle, int interfaceNum){
+        // Release the ADB interface
+        int result = LibUsb.releaseInterface(handle.getHandle(), interfaceNum);
+        if (result != LibUsb.SUCCESS)
+        {
+            throw new LibUsbException("Unable to release interface", result);
+        }
+
+
+        // Close the device
+        LibUsb.close(handle.getHandle());
+
+        if (handle.isNeedDetach())
+        {
+             result = LibUsb.attachKernelDriver(handle.getHandle(),  interfaceNum);
+            if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to re-attach kernel driver", result);
+        }
+    }
+
+    /**
+     *
+     * @param handle USBDeviceHandle получаемый при открытии устройства
+     * @param data байтовый массив
+     * @param outEndPoint адрес конечной точки
+     * @param timeout
+     */
+    public static void write(USBDeviceHandle handle, byte[] data, byte outEndPoint, long timeout)
+    {
+        ByteBuffer buffer = BufferUtils.allocateByteBuffer(data.length);
+        buffer.put(data);
+        IntBuffer transferred = BufferUtils.allocateIntBuffer();
+        int result = LibUsb.bulkTransfer(handle.getHandle(), outEndPoint, buffer, transferred, timeout);
+        if (result != LibUsb.SUCCESS)
+        {
+            throw new LibUsbException("Unable to send data", result);
+        }
+        System.out.println(transferred.get() + " bytes sent to device");
+    }
+
+    /**
+     *
+     * @param handle
+     * @param size
+     * @param inEndPoint
+     * @param timeout
+     * @return
+     */
+    public static ByteBuffer read(USBDeviceHandle handle, int size, byte inEndPoint, long timeout)
+    {
+        ByteBuffer buffer = BufferUtils.allocateByteBuffer(size)
+              .order(ByteOrder.LITTLE_ENDIAN);
+        IntBuffer transferred = BufferUtils.allocateIntBuffer();
+        int result = LibUsb.bulkTransfer(handle.getHandle(), inEndPoint, buffer,
+                transferred, timeout);
+        if (result != LibUsb.SUCCESS)
+        {
+            throw new LibUsbException("Unable to read data", result);
+        }
+        System.out.println(transferred.get() + " bytes read from device");
+        return buffer;
+    }
+
 
 
     /**
@@ -390,6 +520,7 @@ public class USBHelper{
 
             //пройдемся по списку обработчиков, вызовем если PID и VID совпали
             DeviceDescriptor descriptor = new DeviceDescriptor();
+
             int result = LibUsb.getDeviceDescriptor(device, descriptor);
             if (result != LibUsb.SUCCESS)  throw new LibUsbException("Unable to read device descriptor",result);
 
