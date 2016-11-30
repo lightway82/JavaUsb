@@ -1,8 +1,5 @@
 package org.anantacreative.javausb;
 
-import org.usb4java.*;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -63,27 +60,60 @@ public class Main {
         }
  */
         USBHelper.USBDeviceHandle usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
-        byte[] bytes = new byte[64];
-        bytes[0]=0x0;
-        bytes[0]=0x34;
+        byte[] commandRead = new byte[64];
+        commandRead[0]=0x34;
+        USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,10000);
 
-        USBHelper.write(usbDeviceHandle,bytes,OUT_END_POINT,10000);
+        //читаем
         ByteBuffer data = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
         data.position(0);
         byte[] bytes2 = new byte[64];
 
         data.get(bytes2);
-        System.out.println(bytesToHex(bytes2));
+        System.out.println(ByteHelper.bytesToHex(bytes2,64,' '));
         data.position(1);
-        System.out.println("Size = "+(int)data.getChar());
+        int size = data.getChar();
+        System.out.println("Size = "+ size);
+        data.position(1);
+      //  int  dlina = data.get(1) * 256 + data.get(2);
+       // System.out.println("Size2 = "+dlina);
+
+
+        int packets = (int)Math.ceil(size / 64);
+        System.out.println("packets = "+packets);
+        System.out.println("___________________");
+
+        byte[] deviceData = new byte[64*packets];
+        for(int i=0;i<packets;i++){
+
+            USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,10000);
+
+            //читаем
+            data = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
+            data.position(0);
+
+            data.get(deviceData,i*64,64);
+
+        }
+        System.out.println(ByteHelper.bytesToHex(deviceData,16,' '));
+
 
         USBHelper.closeDevice(usbDeviceHandle,0);
-
-
         USBHelper.closeContext();
 
     }
-   /* fenfz, при порядке от старшего к младшему преобразуется так:
+
+
+
+
+
+   public static void parseDeviceData(byte[] data,int byteSize){
+
+
+   }
+}
+
+ /* При порядке от старшего к младшему преобразуется так:
 
     int i = ((byte_array[0] & 0xFF) << 24) + ((byte_array[1] & 0xFF) << 16) + ((byte_array[2] & 0xFF) << 8) + (byte_array[3] & 0xFF);
 
@@ -103,40 +133,5 @@ public class Main {
         return null;
     }
 }
-
-ENCODING="UTF-8" - для Android или же можно просто вызывать new String(buf) - тогда будет применяться кодировка по умолчанию.
-
-Update
-
-Если требуется записать байты строкой, то поможет такой методочек:
-
-public static String bytesToHex(byte[] array)
-{
-    char[] val = new char[2*array.length];
-    String hex = "0123456789ABCDEF";
-    for (int i = 0; i < array.length; i++)
-    {
-        int b = array[i] & 0xff;
-        val[2*i] = hex.charAt(b >>> 4);
-        val[2*i + 1] = hex.charAt(b & 15);
-    }
-    return String.valueOf(val);
-}
-
 */
-   public static String bytesToHex(byte[] array)
-   {
-       char[] val = new char[2*array.length];
-       String hex = "0123456789ABCDEF";
-       for (int i = 0; i < array.length; i++)
-       {
-           int b = array[i] & 0xff;
-           val[2*i] = hex.charAt(b >>> 4);
-           val[2*i + 1] = hex.charAt(b & 15);
-       }
-       return String.valueOf(val);
-   }
-}
-
-
 

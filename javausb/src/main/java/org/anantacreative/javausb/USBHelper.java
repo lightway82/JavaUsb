@@ -2,9 +2,7 @@ package org.anantacreative.javausb;
 
 import org.usb4java.*;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -354,7 +352,7 @@ static class USBDeviceHandle{
         {
             throw new LibUsbException("Unable to send data", result);
         }
-        System.out.println(transferred.get() + " bytes sent to device");
+        //System.out.println(transferred.get() + " bytes sent to device");
     }
 
     /**
@@ -367,8 +365,7 @@ static class USBDeviceHandle{
      */
     public static ByteBuffer read(USBDeviceHandle handle, int size, byte inEndPoint, long timeout)
     {
-        ByteBuffer buffer = BufferUtils.allocateByteBuffer(size)
-              .order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = BufferUtils.allocateByteBuffer(size);
         IntBuffer transferred = BufferUtils.allocateIntBuffer();
         int result = LibUsb.bulkTransfer(handle.getHandle(), inEndPoint, buffer,
                 transferred, timeout);
@@ -376,7 +373,7 @@ static class USBDeviceHandle{
         {
             throw new LibUsbException("Unable to read data", result);
         }
-        System.out.println(transferred.get() + " bytes read from device");
+        //System.out.println(transferred.get() + " bytes read from device");
         return buffer;
     }
 
