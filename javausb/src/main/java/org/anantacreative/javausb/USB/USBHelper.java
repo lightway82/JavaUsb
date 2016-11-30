@@ -1,4 +1,4 @@
-package org.anantacreative.javausb;
+package org.anantacreative.javausb.USB;
 
 import org.usb4java.*;
 

@@ -1,4 +1,4 @@
-package org.anantacreative.javausb;
+package org.anantacreative.javausb.USB;
 
 import java.util.ArrayList;
 import java.util.List;

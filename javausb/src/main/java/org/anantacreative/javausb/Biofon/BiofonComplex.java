@@ -1,4 +1,4 @@
-package org.anantacreative.javausb;
+package org.anantacreative.javausb.Biofon;
 
 import java.util.ArrayList;
 import java.util.Collections;

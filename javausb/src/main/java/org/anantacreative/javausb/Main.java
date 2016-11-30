@@ -1,5 +1,8 @@
 package org.anantacreative.javausb;
 
+import org.anantacreative.javausb.USB.ByteHelper;
+import org.anantacreative.javausb.USB.USBHelper;
+
 import java.nio.ByteBuffer;
 
 /**
