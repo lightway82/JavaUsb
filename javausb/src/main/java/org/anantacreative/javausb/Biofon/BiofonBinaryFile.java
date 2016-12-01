@@ -10,7 +10,7 @@ import java.util.List;
 public class BiofonBinaryFile {
 
     private final List<BiofonComplex> complexesList=new ArrayList<>();
-    private static int MAX_FILE_BYTES=6192;
+    private static int MAX_FILE_BYTES=6912;
 
 
     public BiofonBinaryFile() {
@@ -20,7 +20,24 @@ public class BiofonBinaryFile {
      * Переводит байтовые данные в структуру данных
      * @param fileData
      */
-    public BiofonBinaryFile(byte[] fileData) {
+    public BiofonBinaryFile(byte[] fileData) throws FileParseException {
+        //всего 3 комплекса. Ограничение прибора.
+        try {
+            BiofonComplex biofonComplex1 = new BiofonComplex(fileData, 0);
+            complexesList.add(biofonComplex1);
+
+            BiofonComplex biofonComplex2 = new BiofonComplex(fileData, biofonComplex1.getLastComplexInArrayPosition()+1);
+            complexesList.add(biofonComplex2);
+
+            BiofonComplex biofonComplex3 = new BiofonComplex(fileData, biofonComplex2.getLastComplexInArrayPosition()+1);
+            complexesList.add(biofonComplex3);
+
+            ///как определить сколько комплексов записано???
+
+        } catch (BiofonComplex.ComplexParseException e) {
+           throw new FileParseException(e);
+        }
+
     }
 
     public List<BiofonComplex> getComplexesList() {
@@ -57,5 +74,9 @@ public class BiofonBinaryFile {
         }
     }
 
-
+    public static class FileParseException extends Exception{
+        public FileParseException(Throwable cause) {
+            super(cause);
+        }
+    }
 }

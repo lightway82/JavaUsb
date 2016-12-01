@@ -1,5 +1,7 @@
 package org.anantacreative.javausb.Biofon;
 
+import org.anantacreative.javausb.USB.ByteHelper;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,11 +13,12 @@ import java.util.List;
 public class BiofonComplex
 {
    private List<BiofonProgram> programs=new ArrayList<>();
-   private short pauseBetweenPrograms;
-   private short timeByFrequency;
+   private int pauseBetweenPrograms;
+   private int timeByFrequency;
    private static int MAX_PROGRAM_COUNT_IN_COMPLEX = (int)Math.pow(2,Byte.SIZE)-1;
    private static int MAX_PAUSE = (int)Math.pow(2,Byte.SIZE)-1;
    private static int MAX_TIME_BY_FREQ = (int)Math.pow(2,Byte.SIZE)-1;
+   private int lastComplexInArrayPosition;
 
     /**
      *
@@ -24,7 +27,7 @@ public class BiofonComplex
      * @throws MaxPauseBoundException
      * @throws MaxTimeByFreqBoundException
      */
-    public BiofonComplex(byte pauseBetweenPrograms, byte timeByFrequency) throws MaxPauseBoundException, MaxTimeByFreqBoundException {
+    public BiofonComplex(int pauseBetweenPrograms, int timeByFrequency) throws MaxPauseBoundException, MaxTimeByFreqBoundException {
         this.pauseBetweenPrograms = pauseBetweenPrograms;
         this.timeByFrequency = timeByFrequency;
         if(this.pauseBetweenPrograms>=MAX_PAUSE)  throw new MaxPauseBoundException();
@@ -35,8 +38,44 @@ public class BiofonComplex
     /**
      * Переводит байтовые данные в структуру данных
      * @param complexData
+     * @param startPosition
      */
-    public BiofonComplex(byte[] complexData) {
+    public BiofonComplex(byte[] complexData, int startPosition) throws ComplexParseException {
+        int position = startPosition;
+        int countPrograms =0;
+        try {
+            //количество программ в комплексе 1 байт
+             countPrograms= ByteHelper.byteArray1ToInt(complexData,position++);
+
+
+            // пауза между программами 1 байт
+            this.pauseBetweenPrograms = ByteHelper.byteArray1ToInt(complexData,position++);
+            // время на частоту 1 байт
+            this.timeByFrequency = ByteHelper.byteArray1ToInt(complexData,position++);
+            //программы
+
+            for(int i=0;i<countPrograms;i++){
+
+                BiofonProgram biofonProgram  = new BiofonProgram(complexData, position );
+                programs.add(biofonProgram);
+                position = biofonProgram.getLastPositionInArray()+1;//укажет на след. стартовую поз. программы
+
+            }
+
+            lastComplexInArrayPosition=position-1;
+
+        }catch (BiofonProgram.ProgramParseException e) {
+           throw new ComplexParseException(e);
+        } catch (Exception e){
+            throw new ComplexParseException(e);
+        }
+
+
+
+    }
+
+    protected int getLastComplexInArrayPosition() {
+        return lastComplexInArrayPosition;
     }
 
     public List<BiofonProgram> getPrograms() {
@@ -52,11 +91,11 @@ public class BiofonComplex
         if(programs.size() >= MAX_PROGRAM_COUNT_IN_COMPLEX )throw new MaxCountProgramBoundException();
     }
 
-    public short getPauseBetweenPrograms() {
+    public int getPauseBetweenPrograms() {
         return pauseBetweenPrograms;
     }
 
-    public short getTimeByFrequency() {
+    public int getTimeByFrequency() {
         return timeByFrequency;
     }
 
@@ -68,8 +107,6 @@ public class BiofonComplex
         // время на частоту 1 байт
         //программы
 
-
-        //индексы программ по 3 байта, в порядке их записи.
         List<Byte> res=new ArrayList<>();
         res.add((byte)getCountPrograms());
         res.add((byte)pauseBetweenPrograms);
@@ -78,6 +115,18 @@ public class BiofonComplex
 
         return res;
     }
+
+
+
+    /**
+     * Ошибка парсинга байтового масиива комплекса
+     */
+    public static class ComplexParseException extends Exception {
+        public ComplexParseException(Throwable cause) {
+            super( cause);
+        }
+    }
+
 
     /**
      * Если пауза больше возможной(255)

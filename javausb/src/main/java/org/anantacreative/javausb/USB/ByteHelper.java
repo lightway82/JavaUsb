@@ -62,28 +62,110 @@ public class ByteHelper {
 
     }
 
+
+    /**
+     * Преоюразует 4 элемента начиная с startPos в int
+     * @param val
+     * @param startPos
+     * @param order
+     * @return
+     * @throws Exception
+     */
+    public static int byteArray4ToInt(byte[] val, int startPos, ByteOrder order) throws Exception{
+        return byteArrayToInt(val,startPos,startPos+3,order);
+    }
+
+    /**
+     * Преоюразует 3 элемента начиная с startPos в int
+     * @param val
+     * @param startPos
+     * @param order
+     * @return
+     * @throws Exception
+     */
+    public static int byteArray3ToInt(byte[] val, int startPos, ByteOrder order) throws Exception{
+        return byteArrayToInt(val,startPos,startPos+2,order);
+    }
+
+    /**
+     * Преоюразует 2 элемента начиная с startPos в int
+     * @param val
+     * @param startPos
+     * @param order
+     * @return
+     * @throws Exception
+     */
+    public static int byteArray2ToInt(byte[] val, int startPos, ByteOrder order) throws Exception{
+        return byteArrayToInt(val,startPos,startPos+1,order);
+    }
+
+    /**
+     * Преоюразует 1 элемент  в позиции startPos в int
+     * @param val
+     * @param startPos
+     *
+     * @return
+     * @throws Exception
+     */
+    public static int byteArray1ToInt(byte[] val, int startPos) throws Exception{
+        return (val[startPos] & 0xFF);
+    }
+
     /**
      * Преобразует в int до 4  байтов
+     * @param val
+     * @param order порядок байт в массиве
+     *  @param startPos начальный элемент массива
+     *  @param stopPos конечный элемент массива, может быть равен startPos, тогда будет обрабатываться один байт
+     * @return
+     */
+    public static int byteArrayToInt(byte[] val, int startPos,int stopPos, ByteOrder order) throws Exception {
+
+        int len = stopPos-startPos+1;
+        if(len > 4) throw new Exception("Массив должен иметь не более 4 элементов");
+        else if(len <= 0) throw new Exception("startPos должен быть меньше stopPos");
+        else if(startPos >=val.length || startPos < 0)throw new Exception("startPos должен в пределах индексов массива");
+        else if(stopPos >=val.length || startPos < 0)throw new Exception("stopPos должен в пределах индексов массива");
+
+        if(order==ByteOrder.BIG_TO_SMALL) {
+            if(len==4) return  ((val[startPos] & 0xFF) << 24) + ((val[startPos+1] & 0xFF) << 16) + ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
+            else if(len==3) return    ((val[startPos+1] & 0xFF) << 16) + ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
+            else if(len==2) return     ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
+            else if(len==1) return    (val[startPos+3] & 0xFF);
+            else throw new Exception("Отрезок массива должен быть не более 4 элементов и не менее 1");
+        }else {
+
+            if(len==4) return   ((val[startPos+3] & 0xFF) << 24) + ((val[startPos+2] & 0xFF) << 16) + ((val[startPos+1] & 0xFF) << 8) + (val[startPos] & 0xFF);
+            else if(len==3)return    ((val[startPos+2] & 0xFF) << 16) + ((val[startPos+1] & 0xFF) << 8) + (val[startPos] & 0xFF);
+            else if(len==2) return    ((val[startPos+1] & 0xFF) << 8) + (val[startPos] & 0xFF);
+            else if(len==1) return     (val[startPos] & 0xFF);
+            else throw new Exception("Отрезок массив должен быть не более 4 элементов и не менее 1");
+        }
+    }
+
+
+    /**
+     * Преобразует в int до 4  байтов массива, начиная с начала массива
      * @param val
      * @param order порядок байт в массиве
      * @return
      */
     public static int byteArrayToInt(byte[] val, ByteOrder order) throws Exception {
 
-        if(val.length>4) throw new Exception("Массив должен быть не более 4 элементов");
+        if(val.length>4) throw new Exception("Массив должен иметь не более 4 элементов");
         if(order==ByteOrder.BIG_TO_SMALL) {
             if(val.length==4) return  ((val[0] & 0xFF) << 24) + ((val[1] & 0xFF) << 16) + ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
             else if(val.length==3) return    ((val[1] & 0xFF) << 16) + ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
             else if(val.length==2) return     ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
             else if(val.length==1) return    (val[3] & 0xFF);
-            else throw new Exception("Массив должен быть не более 4 элементов и не менее 1");
+            else throw new Exception("Массив должен иметь не более 4 элементов и не менее 1");
         }else {
 
             if(val.length==4) return   ((val[3] & 0xFF) << 24) + ((val[2] & 0xFF) << 16) + ((val[1] & 0xFF) << 8) + (val[0] & 0xFF);
             else if(val.length==3)return    ((val[2] & 0xFF) << 16) + ((val[1] & 0xFF) << 8) + (val[0] & 0xFF);
             else if(val.length==2) return    ((val[1] & 0xFF) << 8) + (val[0] & 0xFF);
             else if(val.length==1) return     (val[0] & 0xFF);
-            else throw new Exception("Массив должен быть не более 4 элементов и не менее 1");
+            else throw new Exception("Массив должен иметь не более 4 элементов и не менее 1");
         }
     }
 
