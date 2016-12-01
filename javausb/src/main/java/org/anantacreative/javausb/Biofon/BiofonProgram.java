@@ -19,7 +19,7 @@ public class BiofonProgram {
     private static int MAX_FREQUENCIES_COUNT = (int) Math.pow(2, Byte.SIZE) - 1;
     private static int FREQ_NUM_BYTES = 4;
     private static int FREQ_PRECISE = 2;
-    private static int MAX_FREQ_VALUE = 12500;
+    private static double MAX_FREQ_VALUE = 12500.0;
     private int lastPositionInArray;
     private int programID;
 
@@ -30,7 +30,7 @@ public class BiofonProgram {
     public BiofonProgram(List<Double> frequencies, int programID) throws MaxFrequenciesBoundException {
 
         if (frequencies.size() >= MAX_FREQUENCIES_COUNT) throw new MaxFrequenciesBoundException();
-        this.frequencies.addAll(frequencies);
+        this.frequencies.addAll(frequencies.stream().map(f-> f.doubleValue() > MAX_FREQ_VALUE ? MAX_FREQ_VALUE:f ).collect(Collectors.toList()));
         //преобразование в формат прибора
         frequenciesInDeviceFormat = this.frequencies.stream()
                                                     .map(BiofonProgram::freqToDeviceFormat)
