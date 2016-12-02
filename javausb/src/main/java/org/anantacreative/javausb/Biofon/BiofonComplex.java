@@ -101,16 +101,19 @@ public class BiofonComplex
 
     public int getCountPrograms(){return programs.size();}
 
-    protected List<Byte> toByteList(){
-        //количество программ в комплексе 1 байт
-        // пауза между программами 1 байт
-        // время на частоту 1 байт
-        //программы
+    protected List<Byte> toByteList() throws ZeroCountProgramBoundException {
+
+        if(programs.size()==0) throw new ZeroCountProgramBoundException();
 
         List<Byte> res=new ArrayList<>();
+
+        //количество программ в комплексе 1 байт
         res.add((byte)getCountPrograms());
+        // пауза между программами 1 байт
         res.add((byte)pauseBetweenPrograms);
+        // время на частоту 1 байт
         res.add((byte)timeByFrequency);
+        //программы
         for (BiofonProgram program : programs)   res.addAll(program.toByteList());
 
         return res;
@@ -151,5 +154,28 @@ public class BiofonComplex
         protected MaxCountProgramBoundException() {
             super();
         }
+    }
+
+    public static class ZeroCountProgramBoundException extends Exception{
+        protected ZeroCountProgramBoundException() {
+            super();
+        }
+    }
+
+    @Override
+    public String toString() {
+        String res= "\nBiofonComplex{\n"+
+                "countPrograms = "+programs.size()+
+                "  pauseBetweenPrograms=" +pauseBetweenPrograms+
+                ", timeByFrequency=" + timeByFrequency +
+                ", lastComplexInArrayPosition=" + lastComplexInArrayPosition +
+                "\nprograms={\n";
+
+        for (BiofonProgram program : programs) {
+            res+=program.toString();
+        }
+
+        res+="\n}\n";
+        return res;
     }
 }

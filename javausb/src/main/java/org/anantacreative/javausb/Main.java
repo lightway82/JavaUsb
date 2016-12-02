@@ -1,9 +1,12 @@
 package org.anantacreative.javausb;
 
+import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
 import org.anantacreative.javausb.USB.ByteHelper;
 import org.anantacreative.javausb.USB.USBHelper;
 
 import java.nio.ByteBuffer;
+
+
 
 /**
  * Created by anama on 20.10.16.
@@ -99,6 +102,15 @@ public class Main {
 
         }
         System.out.println(ByteHelper.bytesToHex(deviceData,16,' '));
+        System.out.print("Parse data...");
+        try {
+            BiofonBinaryFile biofonBinaryFile = new BiofonBinaryFile(deviceData);
+            System.out.println("OK");
+            System.out.println(biofonBinaryFile.toString());
+        } catch (BiofonBinaryFile.FileParseException e) {
+            System.out.println("FAIL");
+            e.printStackTrace();
+        }
 
 
         USBHelper.closeDevice(usbDeviceHandle,0);

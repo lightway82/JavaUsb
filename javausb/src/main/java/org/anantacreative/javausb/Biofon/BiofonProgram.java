@@ -22,13 +22,16 @@ public class BiofonProgram {
     private static double MAX_FREQ_VALUE = 12500.0;
     private int lastPositionInArray;
     private int programID;
+    private static int MAX_PROGRAM_ID_VALUE=(int)Math.pow(2,Byte.SIZE*3)-1;
 
     /**
      * @param frequencies
      * @param programID
      */
-    public BiofonProgram(List<Double> frequencies, int programID) throws MaxFrequenciesBoundException {
-
+    public BiofonProgram(List<Double> frequencies, int programID) throws MaxFrequenciesBoundException, MinFrequenciesBoundException, MaxProgramIDValueBoundException {
+            if(programID > MAX_PROGRAM_ID_VALUE) throw new MaxProgramIDValueBoundException();
+                this.programID=programID;
+        if(frequencies.size()==0) throw new MinFrequenciesBoundException();
         if (frequencies.size() >= MAX_FREQUENCIES_COUNT) throw new MaxFrequenciesBoundException();
         this.frequencies.addAll(frequencies.stream().map(f-> f.doubleValue() > MAX_FREQ_VALUE ? MAX_FREQ_VALUE:f ).collect(Collectors.toList()));
         //преобразование в формат прибора
@@ -108,6 +111,11 @@ public class BiofonProgram {
         return frequencies.size();
     }
 
+
+    protected void setProgramID(int programID) {
+        this.programID = programID;
+    }
+
     /**
      * ID програмы в программе(из какой программы была получена в программе эта программа)
      *
@@ -162,5 +170,29 @@ public class BiofonProgram {
             super();
         }
     }
+    /**
+     * Указывает на то , что в программе нет частот
+     */
+    public static class MinFrequenciesBoundException extends Exception {
+        protected MinFrequenciesBoundException() {
+            super();
+        }
+    }
 
+    public static class MaxProgramIDValueBoundException extends Exception {
+        protected MaxProgramIDValueBoundException() {
+            super();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "BiofonProgram{\n" +
+                "countFrequencies = "+frequencies.size()+
+                "\n frequenciesInDeviceFormat=" + frequenciesInDeviceFormat +
+                "\n lastPositionInArray=" + lastPositionInArray +
+                ", programID=" + programID +
+                " \nfrequencies = [ " + frequencies.stream().map(f->f.toString()).collect(Collectors.joining("; ")) +" ]\n}\n";
+
+    }
 }

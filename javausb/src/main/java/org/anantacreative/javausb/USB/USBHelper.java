@@ -251,7 +251,7 @@ public class USBHelper{
     }
 
 
-static class USBDeviceHandle{
+static public class USBDeviceHandle{
     private DeviceHandle handle;
     private boolean needDetach;
 

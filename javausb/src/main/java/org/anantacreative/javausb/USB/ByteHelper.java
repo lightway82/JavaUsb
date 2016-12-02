@@ -17,7 +17,7 @@ public class ByteHelper {
      * @param order
      * @return
      */
-    public static final byte[] intToByteArray(int value, ByteOrder order ) {
+    public static  byte[] intToByteArray(int value, ByteOrder order ) {
         if(order==ByteOrder.BIG_TO_SMALL)
         {
             return new byte[]{
@@ -36,7 +36,57 @@ public class ByteHelper {
         }
 
     }
+    /**
+     * int в байтовый массив с указаным порядком байт
+     * @param value
+     * @param order
+     * @return
+     */
+    public static  byte[] intTo3ByteArray(int value, ByteOrder order ) {
+        if(order==ByteOrder.BIG_TO_SMALL)
+        {
+            return new byte[]{
+                    (byte) value,
+                    (byte) (value >>> 8),
+                    (byte) (value >>> 16)
 
+            };
+        } else {
+            return new byte[] {
+
+                    (byte)(value >>> 16),
+                    (byte)(value >>> 8),
+                    (byte)value
+            };
+        }
+
+    }
+
+    /**
+     * int в байтовый массив с указаным порядком байт
+     * @param value
+     * @param order
+     * @return
+     */
+    public static  byte[] intTo2ByteArray(int value, ByteOrder order ) {
+        if(order==ByteOrder.BIG_TO_SMALL)
+        {
+            return new byte[]{
+                    (byte) value,
+                    (byte) (value >>> 8)
+
+
+            };
+        } else {
+            return new byte[] {
+
+
+                    (byte)(value >>> 8),
+                    (byte)value
+            };
+        }
+
+    }
     /**
      * int в список байт с заданным порядком
      * @param value
@@ -56,6 +106,56 @@ public class ByteHelper {
             res.add((byte)(value >>> 8));
             res.add((byte)(value >>> 16));
             res.add((byte)(value >>> 24));
+
+        }
+        return res;
+
+    }
+
+    /**
+     * Преобразует int в 3 байта. Если int больше чем может поместиться в 3 байта(2^24-1) 16 777 216, то буде урезан
+     * @param value
+     * @param order
+     * @return
+     */
+    public static  List<Byte> intTo3ByteList(int value, ByteOrder order ) {
+
+        List<Byte> res=new ArrayList<>();
+        if(order==ByteOrder.BIG_TO_SMALL){
+
+            res.add((byte)(value >>> 16));
+            res.add((byte)(value >>> 8));
+            res.add((byte)value);
+        }else {
+            res.add((byte)value);
+            res.add((byte)(value >>> 8));
+            res.add((byte)(value >>> 16));
+
+
+        }
+        return res;
+
+    }
+
+    /**
+     * Преобразует int в 3 байта. Если int больше чем может поместиться в 3 байта(2^16-1) 655 535, то буде урезан
+     * @param value
+     * @param order
+     * @return
+     */
+    public static  List<Byte> intTo2ByteList(int value, ByteOrder order ) {
+
+        List<Byte> res=new ArrayList<>();
+        if(order==ByteOrder.BIG_TO_SMALL){
+
+
+            res.add((byte)(value >>> 8));
+            res.add((byte)value);
+        }else {
+            res.add((byte)value);
+            res.add((byte)(value >>> 8));
+
+
 
         }
         return res;

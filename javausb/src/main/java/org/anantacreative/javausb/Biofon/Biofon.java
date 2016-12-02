@@ -12,7 +12,7 @@ public class Biofon
 
 
     public static BiofonBinaryFile readFromDevice(){
-
+    return null;
     }
 
     public static void writeToDevice(BiofonBinaryFile data){
