@@ -15,6 +15,7 @@ public class BiofonBinaryFile {
     private final List<BiofonComplex> complexesList=new ArrayList<>();
     private static int MAX_FILE_BYTES=6912;
     private static int PROGRAM_ID_BYTE_SIZE=3;//сколько байт занимает индекс программы в файле
+    private static int ALIGN_FILE_BYTE_SIZE=64;//длина файла должна быть кратна ALIGN_FILE_BYTE_SIZE
 
 
     public BiofonBinaryFile(BiofonComplex complex1,BiofonComplex complex2,BiofonComplex complex3) {
@@ -99,8 +100,9 @@ public class BiofonBinaryFile {
 
         if(res.size()> MAX_FILE_BYTES)  throw new MaxBytesBoundException();
 
+        int additionalBytes = ALIGN_FILE_BYTE_SIZE -res.size() % ALIGN_FILE_BYTE_SIZE;
 
-        final byte[] result=new byte[res.size()];
+        final byte[] result=new byte[res.size()+additionalBytes];
        for(int i=0;i<res.size();i++)result[i]=res.get(i);
        return result;
     }
