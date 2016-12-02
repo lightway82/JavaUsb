@@ -11,6 +11,39 @@ import java.util.List;
 /**
  * Обязательна инициализация initContext()
  * Если был вызван closeContext(), то требуется переинициализация
+ * <pre><code>
+        Device device = USBHelper.findDevice(vendorId, productId);
+        if(device==null) {
+        System.out.println("Устройство не обнаружено");
+        System.exit(0);
+        }
+        USBHelper.dumpDevice(device);
+
+
+        USBHelper.addPlugEventHandler(productId, vendorId, new USBHelper.PlugDeviceListener() {
+        @Override
+        public void onAttachDevice(Device device) {
+        System.out.println("Устройство присобачили");
+        }
+
+        @Override
+        public void onDetachDevice(Device device) {
+        System.out.println("Устройство отсобачили");
+        }
+        });
+
+        USBHelper.startHotPlugListener();
+
+        try {
+        System.in.read();
+        System.out.println("Выкл");
+        } catch (IOException e) {
+        e.printStackTrace();
+        }finally {
+        USBHelper.stopHotPlugListener();
+        USBHelper.closeContext();
+        }
+ </code></pre>
  *
  * Created by anama on 21.11.16.
  */
