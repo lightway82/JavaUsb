@@ -2,8 +2,8 @@ package org.anantacreative.javausb;
 
 import org.anantacreative.javausb.Biofon.Biofon;
 import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
+import org.anantacreative.javausb.USB.PlugDeviceListener;
 import org.anantacreative.javausb.USB.USBHelper;
-import org.usb4java.Device;
 
 import java.io.IOException;
 
@@ -17,9 +17,9 @@ public class Main {
     public static void main(final String[] args) {
         USBHelper.initContext();
 
-        USBHelper.addPlugEventHandler(Biofon.productId, Biofon.vendorId, new USBHelper.PlugDeviceListener() {
+        USBHelper.addPlugEventHandler(Biofon.productId, Biofon.vendorId, new PlugDeviceListener() {
             @Override
-            public void onAttachDevice(Device device) {
+            public void onAttachDevice() {
                 System.out.println("Устройство присобачили");
                 try {
                     BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
@@ -30,12 +30,12 @@ public class Main {
             }
 
             @Override
-            public void onDetachDevice(Device device) {
+            public void onDetachDevice() {
                 System.out.println("Устройство отсобачили");
             }
         });
 
-        USBHelper.startHotPlugListener();
+        USBHelper.startHotPlugListener(2);
 
         try {
             System.in.read();
@@ -48,6 +48,8 @@ public class Main {
             USBHelper.closeContext();
 
         }
+
+
     }
 
 }

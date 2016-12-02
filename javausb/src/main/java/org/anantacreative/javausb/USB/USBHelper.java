@@ -52,7 +52,15 @@ public class USBHelper{
     private static  Context context=null;
     private static List<PlugListenerContainer> plugDeviceListenerList=new ArrayList<>();
 
-   public static void initContext()
+    protected static List<PlugListenerContainer> getPlugDeviceListenerList() {
+        return plugDeviceListenerList;
+    }
+
+    protected static Context getContext() {
+        return context;
+    }
+
+    public static void initContext()
    {
        if(context!=null) return;
         // Create the libusb context
@@ -234,32 +242,19 @@ public class USBHelper{
 
 
     }
-    private static EventHandlingThread thread;
-    private static HotplugCallbackHandle callbackHandle;
 
-    public synchronized static void startHotPlugListener(){
+private static IDeviceDetect deviceDetector;
+    /**
+     * Начать отслеживать устройства, обработчики для которых были переданы через addPlugEventHandler()
+     * @param periodSec период опроса шины в секундах
+     */
+    public synchronized static void startHotPlugListener(int periodSec){
+        if( deviceDetector !=null) return;
 
-        if(thread!=null) return;
-        if(callbackHandle!=null)return;
-        thread = new EventHandlingThread();
-        thread.start();
+        if(LibUsb.hasCapability(LibUsb.CAP_HAS_HOTPLUG)) deviceDetector=new HotPlugDeviceDetect(periodSec);
+        else  deviceDetector=new FindDeviceDetector(periodSec);
 
-        // Register the hotplug callback
-         callbackHandle = new HotplugCallbackHandle();
-        int result = LibUsb.hotplugRegisterCallback(null,
-                LibUsb.HOTPLUG_EVENT_DEVICE_ARRIVED
-                        | LibUsb.HOTPLUG_EVENT_DEVICE_LEFT,
-                LibUsb.HOTPLUG_ENUMERATE,
-                LibUsb.HOTPLUG_MATCH_ANY,
-                LibUsb.HOTPLUG_MATCH_ANY,
-                LibUsb.HOTPLUG_MATCH_ANY,
-                new Callback(), null, callbackHandle);
-        if (result != LibUsb.SUCCESS)
-        {
-            throw new LibUsbException("Unable to register hotplug callback",
-                    result);
-        }
-
+        deviceDetector.startDeviceDetecting();
     }
 
     /**
@@ -268,17 +263,8 @@ public class USBHelper{
     public static synchronized void stopHotPlugListener()
     {
 
-        // Unregister the hotplug callback and stop the event handling thread
-        thread.abort();
-        LibUsb.hotplugDeregisterCallback(null, callbackHandle);
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }finally {
-            thread=null;
-            callbackHandle=null;
-        }
+        deviceDetector.stopDeviceDetecting();
+        deviceDetector=null;
 
 
     }
@@ -415,15 +401,26 @@ static public class USBDeviceHandle{
     /**
      * Контейнер слушателей событий устройств
      */
-    private static class PlugListenerContainer{
+    protected static class PlugListenerContainer{
         private int pid;
         private int vid;
         private PlugDeviceListener pdl;
+        private boolean connected=false;
+
+
 
         public PlugListenerContainer(int pid, int vid, PlugDeviceListener pdl) {
             this.pid = pid;
             this.vid = vid;
             this.pdl = pdl;
+        }
+
+        public boolean isConnected() {
+            return connected;
+        }
+
+        public void setConnected(boolean connected) {
+            this.connected = connected;
         }
 
         public int getPid() {
@@ -507,65 +504,10 @@ static public class USBDeviceHandle{
 
 /*****************************   Классы для HotPlug обработчика  **********************************************/
 
-    public interface PlugDeviceListener{
-
-     void onAttachDevice(Device device);
-     void onDetachDevice(Device device);
-    }
-
-
-
-     private static class EventHandlingThread extends Thread{
-        /** If thread should abort. */
-        private volatile boolean abort;
-
-        /**
-         * Aborts the event handling thread.
-         */
-        public void abort()
-        {
-            this.abort = true;
-        }
-
-        @Override
-        public void run()
-        {
-            while (!this.abort)
-            {
-                // Let libusb handle pending events. This blocks until events
-                // have been handled, a hotplug callback has been deregistered
-                // or the specified time of 1 second (Specified in
-                // Microseconds) has passed.
-                int result = LibUsb.handleEventsTimeout(null, 1000000);
-                if (result != LibUsb.SUCCESS)
-                    throw new LibUsbException("Unable to handle events", result);
-            }
-        }
-    }
-
-    private static class Callback implements HotplugCallback
-    {
-        @Override
-        public int processEvent(Context context, Device device, int event,Object userData) {
-
-            //пройдемся по списку обработчиков, вызовем если PID и VID совпали
-            DeviceDescriptor descriptor = new DeviceDescriptor();
-
-            int result = LibUsb.getDeviceDescriptor(device, descriptor);
-            if (result != LibUsb.SUCCESS)  throw new LibUsbException("Unable to read device descriptor",result);
-
-            for (PlugListenerContainer al : plugDeviceListenerList) {
-                if(al.checkID(descriptor.idProduct(),descriptor.idVendor())){
-
-                    if(event == LibUsb.HOTPLUG_EVENT_DEVICE_ARRIVED)al.getPlugDeviceListener().onAttachDevice(device);
-                    else al.getPlugDeviceListener().onDetachDevice(device);
-                }
-            }
 
 
 
 
-            return 0;
-        }
-    }
+
+
 }
