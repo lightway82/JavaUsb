@@ -1,6 +1,7 @@
 package org.anantacreative.javausb;
 
 import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
+import org.anantacreative.javausb.Biofon.BiofonComplex;
 import org.anantacreative.javausb.USB.ByteHelper;
 import org.anantacreative.javausb.USB.USBHelper;
 
@@ -106,9 +107,21 @@ public class Main {
         try {
             BiofonBinaryFile biofonBinaryFile = new BiofonBinaryFile(deviceData);
             System.out.println("OK");
+            //System.out.println(biofonBinaryFile.toString());
+
+            System.out.println(ByteHelper.bytesToHex(biofonBinaryFile.getData(),16,' '));
             System.out.println(biofonBinaryFile.toString());
+
         } catch (BiofonBinaryFile.FileParseException e) {
             System.out.println("FAIL");
+            e.printStackTrace();
+        } catch (BiofonBinaryFile.MaxBytesBoundException e) {
+            System.out.println("FAIL");
+            System.out.println("Слишком большой файл");
+            e.printStackTrace();
+        } catch (BiofonComplex.ZeroCountProgramBoundException e) {
+            System.out.println("FAIL");
+            System.out.println("В каких-то комплексах нет программ");
             e.printStackTrace();
         }
 

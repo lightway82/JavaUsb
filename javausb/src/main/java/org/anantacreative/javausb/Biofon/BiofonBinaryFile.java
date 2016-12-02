@@ -82,7 +82,7 @@ public class BiofonBinaryFile {
 
 
         final List<Byte> res=new ArrayList<>();
-        final byte[] result=new byte[res.size()];
+
 
 
         for (BiofonComplex biofonComplex : complexesList) {
@@ -100,7 +100,7 @@ public class BiofonBinaryFile {
         if(res.size()> MAX_FILE_BYTES)  throw new MaxBytesBoundException();
 
 
-
+        final byte[] result=new byte[res.size()];
        for(int i=0;i<res.size();i++)result[i]=res.get(i);
        return result;
     }

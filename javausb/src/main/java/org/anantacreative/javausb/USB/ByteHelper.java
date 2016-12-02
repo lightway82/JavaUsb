@@ -229,9 +229,9 @@ public class ByteHelper {
 
         if(order==ByteOrder.BIG_TO_SMALL) {
             if(len==4) return  ((val[startPos] & 0xFF) << 24) + ((val[startPos+1] & 0xFF) << 16) + ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
-            else if(len==3) return    ((val[startPos+1] & 0xFF) << 16) + ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
-            else if(len==2) return     ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
-            else if(len==1) return    (val[startPos+3] & 0xFF);
+            else if(len==3) return    ((val[startPos] & 0xFF) << 16) + ((val[startPos+1] & 0xFF) << 8) + (val[startPos+2] & 0xFF);
+            else if(len==2) return     ((val[startPos] & 0xFF) << 8) + (val[startPos+1] & 0xFF);
+            else if(len==1) return    (val[startPos] & 0xFF);
             else throw new Exception("Отрезок массива должен быть не более 4 элементов и не менее 1");
         }else {
 
@@ -255,9 +255,9 @@ public class ByteHelper {
         if(val.length>4) throw new Exception("Массив должен иметь не более 4 элементов");
         if(order==ByteOrder.BIG_TO_SMALL) {
             if(val.length==4) return  ((val[0] & 0xFF) << 24) + ((val[1] & 0xFF) << 16) + ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
-            else if(val.length==3) return    ((val[1] & 0xFF) << 16) + ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
-            else if(val.length==2) return     ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
-            else if(val.length==1) return    (val[3] & 0xFF);
+            else if(val.length==3) return    ((val[0] & 0xFF) << 16) + ((val[1] & 0xFF) << 8) + (val[2] & 0xFF);
+            else if(val.length==2) return     ((val[0] & 0xFF) << 8) + (val[1] & 0xFF);
+            else if(val.length==1) return    (val[0] & 0xFF);
             else throw new Exception("Массив должен иметь не более 4 элементов и не менее 1");
         }else {
 
