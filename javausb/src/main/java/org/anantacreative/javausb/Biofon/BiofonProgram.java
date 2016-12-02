@@ -15,14 +15,14 @@ import static org.anantacreative.javausb.USB.ByteHelper.*;
 public class BiofonProgram {
     private List<Double> frequencies = new ArrayList<>();
     private List<Integer> frequenciesInDeviceFormat;
-    private static double FREQ_FORMAT_COEFF = 85899.34592;
-    private static int MAX_FREQUENCIES_COUNT = (int) Math.pow(2, Byte.SIZE) - 1;
-    private static int FREQ_NUM_BYTES = 4;
-    private static int FREQ_PRECISE = 2;
-    private static double MAX_FREQ_VALUE = 12500.0;
+    private static  final  double FREQ_FORMAT_COEFF = 85899.34592;
+    private static final  int MAX_FREQUENCIES_COUNT = (int) Math.pow(2, Byte.SIZE) - 1;
+    private static final  int FREQ_NUM_BYTES = 4;
+    private static final  int FREQ_PRECISE = 2;
+    private static final  double MAX_FREQ_VALUE = 12500.0;
     private int lastPositionInArray;
     private int programID;
-    private static int MAX_PROGRAM_ID_VALUE=(int)Math.pow(2,Byte.SIZE*3)-1;
+    private static final  int MAX_PROGRAM_ID_VALUE=(int)Math.pow(2,Byte.SIZE*3)-1;
 
     /**
      * @param frequencies

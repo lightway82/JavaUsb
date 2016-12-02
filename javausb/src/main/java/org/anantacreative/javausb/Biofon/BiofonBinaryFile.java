@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 public class BiofonBinaryFile {
 
     private final List<BiofonComplex> complexesList=new ArrayList<>();
-    private static int MAX_FILE_BYTES=6912;
-    private static int PROGRAM_ID_BYTE_SIZE=3;//сколько байт занимает индекс программы в файле
-    private static int ALIGN_FILE_BYTE_SIZE=64;//длина файла должна быть кратна ALIGN_FILE_BYTE_SIZE
+    public static final int MAX_FILE_BYTES=6912;
+    private static final int PROGRAM_ID_BYTE_SIZE=3;//сколько байт занимает индекс программы в файле
+    private static final int ALIGN_FILE_BYTE_SIZE=64;//длина файла должна быть кратна ALIGN_FILE_BYTE_SIZE
 
 
     public BiofonBinaryFile(BiofonComplex complex1,BiofonComplex complex2,BiofonComplex complex3) {

@@ -1,12 +1,8 @@
 package org.anantacreative.javausb;
 
+import org.anantacreative.javausb.Biofon.Biofon;
 import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
-import org.anantacreative.javausb.Biofon.BiofonComplex;
-import org.anantacreative.javausb.USB.ByteHelper;
 import org.anantacreative.javausb.USB.USBHelper;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 
 /**
@@ -65,7 +61,7 @@ public class Main {
             USBHelper.stopHotPlugListener();
             USBHelper.closeContext();
         }
- */
+
         USBHelper.USBDeviceHandle usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
         byte[] commandRead = new byte[64];
         commandRead[0]=0x34;
@@ -186,6 +182,15 @@ public class Main {
 
 
         USBHelper.closeDevice(usbDeviceHandle,0);
+         */
+
+        try {
+            BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
+            System.out.println(biofonBinaryFile);
+        } catch (Biofon.ReadFromDeviceException e) {
+            e.printStackTrace();
+        }
+
         USBHelper.closeContext();
 
     }

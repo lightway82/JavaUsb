@@ -15,9 +15,9 @@ public class BiofonComplex
    private List<BiofonProgram> programs=new ArrayList<>();
    private int pauseBetweenPrograms;
    private int timeByFrequency;
-   private static int MAX_PROGRAM_COUNT_IN_COMPLEX = (int)Math.pow(2,Byte.SIZE)-1;
-   private static int MAX_PAUSE = (int)Math.pow(2,Byte.SIZE)-1;
-   private static int MAX_TIME_BY_FREQ = (int)Math.pow(2,Byte.SIZE)-1;
+   private static final  int MAX_PROGRAM_COUNT_IN_COMPLEX = (int)Math.pow(2,Byte.SIZE)-1;
+   private static final  int MAX_PAUSE = (int)Math.pow(2,Byte.SIZE)-1;
+   private static final  int MAX_TIME_BY_FREQ = (int)Math.pow(2,Byte.SIZE)-1;
    private int lastComplexInArrayPosition;
 
     /**
