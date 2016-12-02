@@ -6,7 +6,7 @@ import org.anantacreative.javausb.USB.ByteHelper;
 import org.anantacreative.javausb.USB.USBHelper;
 
 import java.nio.ByteBuffer;
-
+import java.util.Arrays;
 
 
 /**
@@ -109,8 +109,67 @@ public class Main {
             System.out.println("OK");
             //System.out.println(biofonBinaryFile.toString());
 
-            System.out.println(ByteHelper.bytesToHex(biofonBinaryFile.getData(),16,' '));
+            byte[] dataToWrite = biofonBinaryFile.getData();
+            System.out.println(ByteHelper.bytesToHex(dataToWrite,16,' '));
+
             System.out.println(biofonBinaryFile.toString());
+
+            System.out.print("Запись на прибор обратно....");
+
+            byte[] commandWrite = new byte[64];
+            commandWrite[0]=0x33;
+
+            byte[] lenBytes = ByteHelper.intTo2ByteArray(dataToWrite.length, ByteHelper.ByteOrder.BIG_TO_SMALL);
+            commandWrite[1]=lenBytes[0];
+            commandWrite[2]=lenBytes[1];
+
+            USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,10000);            //читаем
+            ByteBuffer writeResponse = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
+
+            //запись всего пакета в прибор по 64 байта. Нужно не забыть проверять ответ и статус записи, чтобы отловить ошибки
+            for(int i=0;i < dataToWrite.length/64;i++){
+
+                USBHelper.write(usbDeviceHandle,Arrays.copyOfRange(dataToWrite,64*i,64*i+64),OUT_END_POINT,10000);            //читаем
+                 writeResponse = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
+            }
+            System.out.println("OK");
+
+             commandRead = new byte[64];
+            commandRead[0]=0x34;
+            USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,10000);
+
+            //читаем
+             data = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
+            data.position(0);
+            bytes2 = new byte[64];
+
+            data.get(bytes2);
+            System.out.println(ByteHelper.bytesToHex(bytes2,64,' '));
+            data.position(1);
+             size = data.getChar();
+            System.out.println("Size = "+ size);
+            data.position(1);
+            //  int  dlina = data.get(1) * 256 + data.get(2);
+            // System.out.println("Size2 = "+dlina);
+
+
+             packets = (int)Math.ceil(size / 64);
+            System.out.println("packets = "+packets);
+            System.out.println("___________________");
+
+             deviceData = new byte[64*packets];
+            for(int i=0;i<packets;i++){
+
+                USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,10000);
+
+                //читаем
+                data = USBHelper.read(usbDeviceHandle, 64, IN_END_POINT, 10000);
+                data.position(0);
+
+                data.get(deviceData,i*64,64);
+
+            }
+            System.out.println(ByteHelper.bytesToHex(deviceData,16,' '));
 
         } catch (BiofonBinaryFile.FileParseException e) {
             System.out.println("FAIL");

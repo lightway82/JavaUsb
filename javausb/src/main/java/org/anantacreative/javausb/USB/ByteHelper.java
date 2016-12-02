@@ -18,7 +18,7 @@ public class ByteHelper {
      * @return
      */
     public static  byte[] intToByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.BIG_TO_SMALL)
+        if(order==ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
@@ -43,7 +43,7 @@ public class ByteHelper {
      * @return
      */
     public static  byte[] intTo3ByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.BIG_TO_SMALL)
+        if(order==ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
@@ -69,7 +69,7 @@ public class ByteHelper {
      * @return
      */
     public static  byte[] intTo2ByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.BIG_TO_SMALL)
+        if(order==ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
