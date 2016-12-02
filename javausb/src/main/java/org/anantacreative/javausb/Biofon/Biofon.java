@@ -11,8 +11,8 @@ import java.util.Arrays;
  */
 public class Biofon
 {
-    private static final  short vendorId=(short)0xfc58;
-    private static final  short productId=(short)0x0001;
+    public static final  short vendorId=(short)0xfc58;
+    public static final  short productId=(short)0x0001;
     private static final  byte IN_END_POINT=(byte)0x81;
     private static final  byte OUT_END_POINT=(byte)0x01;
 

@@ -3,6 +3,9 @@ package org.anantacreative.javausb;
 import org.anantacreative.javausb.Biofon.Biofon;
 import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
 import org.anantacreative.javausb.USB.USBHelper;
+import org.usb4java.Device;
+
+import java.io.IOException;
 
 
 /**
@@ -10,25 +13,41 @@ import org.anantacreative.javausb.USB.USBHelper;
  */
 public class Main {
 
-    /**
-     * Main method.
-     *
-     * @param args
-     *            Command-line arguments (Ignored)
-     */
-    public static void main(final String[] args)
-    {
+
+    public static void main(final String[] args) {
         USBHelper.initContext();
 
+        USBHelper.addPlugEventHandler(Biofon.productId, Biofon.vendorId, new USBHelper.PlugDeviceListener() {
+            @Override
+            public void onAttachDevice(Device device) {
+                System.out.println("Устройство присобачили");
+                try {
+                    BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
+                    System.out.println(biofonBinaryFile);
+                } catch (Biofon.ReadFromDeviceException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onDetachDevice(Device device) {
+                System.out.println("Устройство отсобачили");
+            }
+        });
+
+        USBHelper.startHotPlugListener();
+
         try {
-            BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
-            System.out.println(biofonBinaryFile);
-        } catch (Biofon.ReadFromDeviceException e) {
+            System.in.read();
+            System.out.println("Выкл");
+        } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            USBHelper.stopHotPlugListener();
+
+            USBHelper.closeContext();
+
         }
-
-        USBHelper.closeContext();
-
     }
 
 }
