@@ -6,9 +6,7 @@ import org.anantacreative.javausb.USB.USBHelper;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
- * Created by anama on 30.11.16.
- */
+
 public class Biofon
 {
     public static final  short vendorId=(short)0xfc58;

@@ -3,7 +3,8 @@ package org.anantacreative.javausb.USB;
 import org.usb4java.*;
 
 /**
- * Created by Ananta on 02.12.2016.
+ * Отслеживание устройств через регистрацию LibUsb.hotplugRegisterCallback
+ *
  */
 public class HotPlugDeviceDetect implements IDeviceDetect {
 
@@ -12,8 +13,8 @@ public class HotPlugDeviceDetect implements IDeviceDetect {
     private int periodDetection;
 
     /**
-     * Период между детектированием секунд.
-     * @param periodDetection
+     *
+     * @param periodDetection Период между детектированием секунд.
      */
     public HotPlugDeviceDetect(int periodDetection) {
         this.periodDetection = periodDetection;

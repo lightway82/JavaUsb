@@ -3,15 +3,15 @@ package org.anantacreative.javausb.USB;
 import org.usb4java.Device;
 
 /**
- * Created by Ananta on 02.12.2016.
+ * Детектор устройств через поиск по PID и VID
  */
 public class FindDeviceDetector implements IDeviceDetect {
 
     private int periodDetection;
     private EventHandlingThread thread;
     /**
-     * Период между детектированием секунд.
-     * @param periodDetection
+     *
+     * @param periodDetection Период между детектированием секунд.
      */
     public FindDeviceDetector(int periodDetection) {
         this.periodDetection=periodDetection;
@@ -41,9 +41,11 @@ public class FindDeviceDetector implements IDeviceDetect {
     }
 
 
-
+    /**
+     * Поток в котором отслеживаются устройства
+     */
     private static class EventHandlingThread extends Thread{
-        /** If thread should abort. */
+
         private volatile boolean abort;
 
         private int periodDetection;
@@ -55,9 +57,7 @@ public class FindDeviceDetector implements IDeviceDetect {
             this.periodDetection = periodDetection;
         }
 
-        /**
-         * Aborts the event handling thread.
-         */
+
         public void abort()
         {
             this.abort = true;

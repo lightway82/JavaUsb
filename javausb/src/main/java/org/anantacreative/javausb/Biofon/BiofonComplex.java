@@ -6,10 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Представляет комплекс в биофоне
- * Created by Ananta on 30.11.2016.
- */
+
 public class BiofonComplex
 {
    private List<BiofonProgram> programs=new ArrayList<>();

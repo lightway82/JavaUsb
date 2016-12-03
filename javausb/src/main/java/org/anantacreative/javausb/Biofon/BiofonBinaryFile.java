@@ -7,9 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Created by Ananta on 30.11.2016.
- */
+
 public class BiofonBinaryFile {
 
     private final List<BiofonComplex> complexesList=new ArrayList<>();

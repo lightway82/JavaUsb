@@ -9,9 +9,7 @@ import java.util.stream.Collectors;
 
 import static org.anantacreative.javausb.USB.ByteHelper.*;
 
-/**
- * Created by Ananta on 30.11.2016.
- */
+
 public class BiofonProgram {
     private List<Double> frequencies = new ArrayList<>();
     private List<Integer> frequenciesInDeviceFormat;

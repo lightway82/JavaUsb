@@ -8,9 +8,7 @@ import org.anantacreative.javausb.USB.USBHelper;
 import java.io.IOException;
 
 
-/**
- * Created by anama on 20.10.16.
- */
+
 public class Main {
 
 

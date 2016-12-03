@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * Обязательна инициализация initContext()
+ * Контекст статческий.
  * Если был вызван closeContext(), то требуется переинициализация
  * <pre><code>
         Device device = USBHelper.findDevice(vendorId, productId);
@@ -45,12 +46,13 @@ import java.util.List;
         }
  </code></pre>
  *
- * Created by anama on 21.11.16.
+ *
  */
 public class USBHelper{
 
     private static  Context context=null;
     private static List<PlugListenerContainer> plugDeviceListenerList=new ArrayList<>();
+
 
     protected static List<PlugListenerContainer> getPlugDeviceListenerList() {
         return plugDeviceListenerList;
@@ -69,6 +71,11 @@ public class USBHelper{
         }
     }
 
+    /**
+     * Инициализация контекста USB библиотеки.
+     * Выполняется один раз перед началом работы. По окончанию программы следует вызвате его закрытие
+     * @throws USBException
+     */
     public static void initContext() throws USBException {
        if(context!=null) return;
         // Create the libusb context
@@ -83,8 +90,13 @@ public class USBHelper{
     }
 
 
-
-
+    /**
+     * Поиск устройства по идентификаторам
+     * @param vendorId
+     * @param productId
+     * @return Вернет Device или null если ничего не найдено
+     * @throws USBException выбрасывается если была ошибка обращения с USB
+     */
     public static Device findDevice(short vendorId, short productId) throws USBException {
         // Read the USB device list
         DeviceList list = new DeviceList();
@@ -113,10 +125,10 @@ public class USBHelper{
     }
 
     /**
-     * Dumps the specified device to stdout.
+     * Печатает дамп устройства в консоль
      *
-     * @param device
-     *            The device to dump.
+     * @param device  Device
+     *
      */
     public static void dumpDevice(final Device device) throws USBException {
         // Dump device address and bus number
@@ -180,19 +192,7 @@ public class USBHelper{
         }
     }
 
-    /**
-     * Dumps all configuration descriptors of the specified device. Because
-     * libusb descriptors are connected to each other (Configuration descriptor
-     * references interface descriptors which reference endpoint descriptors)
-     * dumping a configuration descriptor also dumps all interface and endpoint
-     * descriptors in this configuration.
-     *
-     * @param device
-     *            The USB device.
-     * @param numConfigurations
-     *            The number of configurations to dump (Read from the device
-     *            descriptor)
-     */
+
     private static void dumpConfigurationDescriptors(final Device device,
                                                     final int numConfigurations) throws USBException {
         for (byte i = 0; i < numConfigurations; i += 1)
@@ -220,7 +220,7 @@ public class USBHelper{
 
     /**
      * Добавит слушатель подключений, отключений устройств
-     * @param el
+     * @param el  PlugDeviceListener, который будет вызываться при событиях с устройством
      */
     public static void addPlugEventHandler(int pid, int vid, PlugDeviceListener el){
 
@@ -249,6 +249,7 @@ public class USBHelper{
 private static IDeviceDetect deviceDetector;
     /**
      * Начать отслеживать устройства, обработчики для которых были переданы через addPlugEventHandler()
+     * Метод самостоятельно выбирает реализацию класса( HotPlugDeviceDetect или FindDeviceDetector)
      * @param periodSec период опроса шины в секундах
      */
     public synchronized static void startHotPlugListener(int periodSec){
@@ -299,7 +300,8 @@ static public class USBDeviceHandle{
      * @param pid
      * @param vid
      * @param interfaceNum номер интерфейса
-     * @return
+     * @return USBDeviceHandle открытого устройства, который используется в методах чтения и записи
+     * @throws USBException в случае ошибки открытия устройства.
      */
     public static USBDeviceHandle openDevice(int pid, int vid, int interfaceNum) throws USBException {
         DeviceHandle handle = LibUsb.openDeviceWithVidPid(context, (short)vid,
@@ -337,6 +339,7 @@ static public class USBDeviceHandle{
      * Закрывает устройство. Освобождает ресурсы
      * @param handle  USBDeviceHandle полученый при открытии устройства
      * @param interfaceNum  номер интерфейса, который открывался
+     *  @throws USBException в случае ошибки закрытия устройства.
      */
     public static void closeDevice(USBDeviceHandle handle, int interfaceNum) throws USBException {
         // Release the ADB interface
@@ -358,11 +361,12 @@ static public class USBDeviceHandle{
     }
 
     /**
-     *
+     *Производит запись буффера data на устройство. Необходимо в конфигурации устройства определить размер передаваемых буфферов.
      * @param handle USBDeviceHandle получаемый при открытии устройства
      * @param data байтовый массив
      * @param outEndPoint адрес конечной точки
-     * @param timeout
+     * @param timeout таймаут операции в миллисекундах
+     * @throws USBException в случае ошибки записи на устройства.
      */
     public static void write(USBDeviceHandle handle, byte[] data, byte outEndPoint, long timeout) throws USBException {
         ByteBuffer buffer = BufferUtils.allocateByteBuffer(data.length);
@@ -373,16 +377,17 @@ static public class USBDeviceHandle{
         {
             throw new USBException("Unable to send data", result);
         }
-        //System.out.println(transferred.get() + " bytes sent to device");
+
     }
 
     /**
-     *
-     * @param handle
-     * @param size
-     * @param inEndPoint
-     * @param timeout
-     * @return
+     * Читает буффер с устройства
+     * @param handle USBDeviceHandle
+     * @param size размер читаемого буффера
+     * @param inEndPoint адрес конечной точки чтения
+     * @param timeout таймаут операции в миллисекундах
+     * @return возвращает ByteBuffer
+     * @throws USBException в случае ошибки чтения устройства.
      */
     public static ByteBuffer read(USBDeviceHandle handle, int size, byte inEndPoint, long timeout) throws USBException {
         ByteBuffer buffer = BufferUtils.allocateByteBuffer(size);
@@ -393,7 +398,7 @@ static public class USBDeviceHandle{
         {
             throw new USBException("Unable to read data", result);
         }
-        //System.out.println(transferred.get() + " bytes read from device");
+
         return buffer;
     }
 
@@ -502,13 +507,6 @@ static public class USBDeviceHandle{
         context=null;
 
     }
-
-/*****************************   Классы для HotPlug обработчика  **********************************************/
-
-
-
-
-
 
 
 }
