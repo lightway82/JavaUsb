@@ -60,8 +60,16 @@ public class USBHelper{
         return context;
     }
 
-    public static void initContext()
-   {
+
+    public static class USBException extends Exception{
+        public USBException(String message, int errorCode) {
+
+            super(String.format("USB error %d: %s: %s", -errorCode, message,
+                    LibUsb.strError(errorCode)));
+        }
+    }
+
+    public static void initContext() throws USBException {
        if(context!=null) return;
         // Create the libusb context
          context = new Context();
@@ -70,21 +78,18 @@ public class USBHelper{
         int result = LibUsb.init(context);
         if (result < 0)
         {
-            throw new LibUsbException("Unable to initialize libusb", result);
+            throw new USBException("Unable to initialize libusb.", result);
         }
     }
 
-  public void addDevice(int pid,int vid){
-
-  }
 
 
-    public static Device findDevice(short vendorId, short productId)
-    {
+
+    public static Device findDevice(short vendorId, short productId) throws USBException {
         // Read the USB device list
         DeviceList list = new DeviceList();
         int result = LibUsb.getDeviceList(null, list);
-        if (result < 0) throw new LibUsbException("Unable to get device list", result);
+        if (result < 0) throw new USBException("Unable to get device list", result);
 
         try
         {
@@ -93,7 +98,7 @@ public class USBHelper{
             {
                 DeviceDescriptor descriptor = new DeviceDescriptor();
                 result = LibUsb.getDeviceDescriptor(device, descriptor);
-                if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to read device descriptor", result);
+                if (result != LibUsb.SUCCESS) throw new USBException("Unable to read device descriptor", result);
                 if (descriptor.idVendor() == vendorId && descriptor.idProduct() == productId) return device;
             }
         }
@@ -113,8 +118,7 @@ public class USBHelper{
      * @param device
      *            The device to dump.
      */
-    public static void dumpDevice(final Device device)
-    {
+    public static void dumpDevice(final Device device) throws USBException {
         // Dump device address and bus number
         final int address = LibUsb.getDeviceAddress(device);
         final int busNumber = LibUsb.getBusNumber(device);
@@ -145,7 +149,7 @@ public class USBHelper{
         int result = LibUsb.getDeviceDescriptor(device, descriptor);
         if (result < 0)
         {
-            throw new LibUsbException("Unable to read device descriptor",
+            throw new USBException("Unable to read device descriptor",
                     result);
         }
 
@@ -190,15 +194,14 @@ public class USBHelper{
      *            descriptor)
      */
     private static void dumpConfigurationDescriptors(final Device device,
-                                                    final int numConfigurations)
-    {
+                                                    final int numConfigurations) throws USBException {
         for (byte i = 0; i < numConfigurations; i += 1)
         {
             final ConfigDescriptor descriptor = new ConfigDescriptor();
             final int result = LibUsb.getConfigDescriptor(device, i, descriptor);
             if (result < 0)
             {
-                throw new LibUsbException("Unable to read config descriptor",
+                throw new USBException("Unable to read config descriptor",
                         result);
             }
             try
@@ -298,7 +301,7 @@ static public class USBDeviceHandle{
      * @param interfaceNum номер интерфейса
      * @return
      */
-    public static USBDeviceHandle openDevice(int pid, int vid, int interfaceNum){
+    public static USBDeviceHandle openDevice(int pid, int vid, int interfaceNum) throws USBException {
         DeviceHandle handle = LibUsb.openDeviceWithVidPid(context, (short)vid,
                 (short)pid);
 
@@ -315,7 +318,7 @@ static public class USBDeviceHandle{
         if (LibUsb.kernelDriverActive(handle, interfaceNum)==1)
         {
             int result = LibUsb.detachKernelDriver(handle,  interfaceNum);
-            if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to detach kernel driver", result);
+            if (result != LibUsb.SUCCESS) throw new USBException("Unable to detach kernel driver", result);
         }
 
 
@@ -323,7 +326,7 @@ static public class USBDeviceHandle{
         int result = LibUsb.claimInterface(handle, interfaceNum);
         if (result != LibUsb.SUCCESS)
         {
-            throw new LibUsbException("Unable to claim interface", result);
+            throw new USBException("Unable to claim interface", result);
         }
         USBDeviceHandle usbDeviceHandle=new USBDeviceHandle(handle,detach);
 
@@ -335,12 +338,12 @@ static public class USBDeviceHandle{
      * @param handle  USBDeviceHandle полученый при открытии устройства
      * @param interfaceNum  номер интерфейса, который открывался
      */
-    public static void closeDevice(USBDeviceHandle handle, int interfaceNum){
+    public static void closeDevice(USBDeviceHandle handle, int interfaceNum) throws USBException {
         // Release the ADB interface
         int result = LibUsb.releaseInterface(handle.getHandle(), interfaceNum);
         if (result != LibUsb.SUCCESS)
         {
-            throw new LibUsbException("Unable to release interface", result);
+            throw new USBException("Unable to release interface", result);
         }
 
 
@@ -350,7 +353,7 @@ static public class USBDeviceHandle{
         if (handle.isNeedDetach())
         {
              result = LibUsb.attachKernelDriver(handle.getHandle(),  interfaceNum);
-            if (result != LibUsb.SUCCESS) throw new LibUsbException("Unable to re-attach kernel driver", result);
+            if (result != LibUsb.SUCCESS) throw new USBException("Unable to re-attach kernel driver", result);
         }
     }
 
@@ -361,15 +364,14 @@ static public class USBDeviceHandle{
      * @param outEndPoint адрес конечной точки
      * @param timeout
      */
-    public static void write(USBDeviceHandle handle, byte[] data, byte outEndPoint, long timeout)
-    {
+    public static void write(USBDeviceHandle handle, byte[] data, byte outEndPoint, long timeout) throws USBException {
         ByteBuffer buffer = BufferUtils.allocateByteBuffer(data.length);
         buffer.put(data);
         IntBuffer transferred = BufferUtils.allocateIntBuffer();
         int result = LibUsb.bulkTransfer(handle.getHandle(), outEndPoint, buffer, transferred, timeout);
         if (result != LibUsb.SUCCESS)
         {
-            throw new LibUsbException("Unable to send data", result);
+            throw new USBException("Unable to send data", result);
         }
         //System.out.println(transferred.get() + " bytes sent to device");
     }
@@ -382,15 +384,14 @@ static public class USBDeviceHandle{
      * @param timeout
      * @return
      */
-    public static ByteBuffer read(USBDeviceHandle handle, int size, byte inEndPoint, long timeout)
-    {
+    public static ByteBuffer read(USBDeviceHandle handle, int size, byte inEndPoint, long timeout) throws USBException {
         ByteBuffer buffer = BufferUtils.allocateByteBuffer(size);
         IntBuffer transferred = BufferUtils.allocateIntBuffer();
         int result = LibUsb.bulkTransfer(handle.getHandle(), inEndPoint, buffer,
                 transferred, timeout);
         if (result != LibUsb.SUCCESS)
         {
-            throw new LibUsbException("Unable to read data", result);
+            throw new USBException("Unable to read data", result);
         }
         //System.out.println(transferred.get() + " bytes read from device");
         return buffer;

@@ -66,15 +66,22 @@ public class FindDeviceDetector implements IDeviceDetect {
         @Override
         public void run()
         {
-            Device device;
+            Device device=null;
             while (!this.abort)
             {
 
                 for (USBHelper.PlugListenerContainer al : USBHelper.getPlugDeviceListenerList()) {
 
-                     device = USBHelper.findDevice((short) al.getVid(), (short) al.getPid());
+                    try {
+                        device = USBHelper.findDevice((short) al.getVid(), (short) al.getPid());
+                    } catch (USBHelper.USBException e) {
+                        System.out.println("Ошибка поиска устройства с vid="+(al.getVid()+" pid="+ (short) al.getPid()));
+                        e.printStackTrace();
+                        abort();
 
-                       if(device!=null){
+                    }
+
+                    if(device!=null){
 
                            if(!al.isConnected()){
 

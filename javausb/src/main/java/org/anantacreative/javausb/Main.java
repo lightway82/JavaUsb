@@ -15,7 +15,11 @@ public class Main {
 
 
     public static void main(final String[] args) {
-        USBHelper.initContext();
+        try {
+            USBHelper.initContext();
+        } catch (USBHelper.USBException e) {
+           throw new RuntimeException(e);
+        }
 
         USBHelper.addPlugEventHandler(Biofon.productId, Biofon.vendorId, new PlugDeviceListener() {
             @Override

@@ -30,7 +30,10 @@ public class Biofon
      */
     public static BiofonBinaryFile readFromDevice(final boolean debug) throws ReadFromDeviceException {
 
-        USBHelper.USBDeviceHandle usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
+        USBHelper.USBDeviceHandle usbDeviceHandle=null;
+        BiofonBinaryFile biofonBinaryFile=null;
+        try {
+         usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
         byte[] commandRead = new byte[DATA_PACKET_SIZE];
         commandRead[0]=READ_COMMAND;
         USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,REQUEST_TIMEOUT_MS);
@@ -69,14 +72,21 @@ public class Biofon
         if(debug) System.out.println(ByteHelper.bytesToHex(deviceData,16,' '));
         if(debug) System.out.print("Parse data...");
 
-        BiofonBinaryFile biofonBinaryFile=null;
-        try {
+
+
              biofonBinaryFile = new BiofonBinaryFile(deviceData);
 
         } catch (BiofonBinaryFile.FileParseException e) {
            throw new ReadFromDeviceException(e);
-        }finally {
-            USBHelper.closeDevice(usbDeviceHandle,0);
+        } catch (USBHelper.USBException e) {
+            throw new ReadFromDeviceException(e);
+        } finally {
+
+            try {
+                USBHelper.closeDevice(usbDeviceHandle,0);
+            } catch (USBHelper.USBException e) {
+
+            }
         }
 
         return biofonBinaryFile;
@@ -89,7 +99,7 @@ public class Biofon
      * Запись комплексов
      * @param data
      */
-    public static void writeToDevice(BiofonBinaryFile data) throws BiofonBinaryFile.MaxBytesBoundException, BiofonComplex.ZeroCountProgramBoundException {
+    public static void writeToDevice(BiofonBinaryFile data) throws BiofonBinaryFile.MaxBytesBoundException, BiofonComplex.ZeroCountProgramBoundException, WriteToDeviceException {
 
         byte[] dataToWrite = data.getData();
         writeToDevice(dataToWrite);
@@ -98,34 +108,46 @@ public class Biofon
     }
 
 
-    private static void writeToDevice(byte[] dataToWrite){
+    private static void writeToDevice(byte[] dataToWrite) throws WriteToDeviceException {
+        USBHelper.USBDeviceHandle usbDeviceHandle=null;
+        try{
 
-        USBHelper.USBDeviceHandle usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
-        byte[] commandWrite = new byte[DATA_PACKET_SIZE];
-        commandWrite[0]=WRITE_COMMAND;
 
-        byte[] lenBytes = ByteHelper.intTo2ByteArray(dataToWrite.length, ByteHelper.ByteOrder.BIG_TO_SMALL);
-        commandWrite[1]=lenBytes[0];
-        commandWrite[2]=lenBytes[1];
+             usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
+            byte[] commandWrite = new byte[DATA_PACKET_SIZE];
+            commandWrite[0]=WRITE_COMMAND;
 
-        //команда на запись
-        USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,REQUEST_TIMEOUT_MS);
+            byte[] lenBytes = ByteHelper.intTo2ByteArray(dataToWrite.length, ByteHelper.ByteOrder.BIG_TO_SMALL);
+            commandWrite[1]=lenBytes[0];
+            commandWrite[2]=lenBytes[1];
 
-        ByteBuffer writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+            //команда на запись
+            USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,REQUEST_TIMEOUT_MS);
 
-        //запись всего пакета в прибор по 64 байта. Нужно не забыть проверять ответ и статус записи, чтобы отловить ошибки
-        for(int i=0;i < dataToWrite.length/DATA_PACKET_SIZE;i++){
+            ByteBuffer writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
 
-            USBHelper.write(usbDeviceHandle, Arrays.copyOfRange(dataToWrite,DATA_PACKET_SIZE*i,DATA_PACKET_SIZE*i+DATA_PACKET_SIZE),OUT_END_POINT,REQUEST_TIMEOUT_MS);            //читаем
-            writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+            //запись всего пакета в прибор по 64 байта. Нужно не забыть проверять ответ и статус записи, чтобы отловить ошибки
+            for(int i=0;i < dataToWrite.length/DATA_PACKET_SIZE;i++){
+
+                USBHelper.write(usbDeviceHandle, Arrays.copyOfRange(dataToWrite,DATA_PACKET_SIZE*i,DATA_PACKET_SIZE*i+DATA_PACKET_SIZE),OUT_END_POINT,REQUEST_TIMEOUT_MS);            //читаем
+                writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+            }
+
+        } catch (USBHelper.USBException e) {
+           throw new WriteToDeviceException(e);
+        }finally {
+            try {
+                USBHelper.closeDevice(usbDeviceHandle,0);
+            } catch (USBHelper.USBException e) {
+
+            }
         }
-        USBHelper.closeDevice(usbDeviceHandle,0);
     }
 
     /**
      * Очистка устройства
      */
-    public static void clearDevice(){
+    public static void clearDevice() throws WriteToDeviceException {
         writeToDevice(new byte[BiofonBinaryFile.MAX_FILE_BYTES]);
     }
 
@@ -136,5 +158,9 @@ public class Biofon
             super(cause);
         }
     }
-
+    public static class WriteToDeviceException extends Exception{
+        public WriteToDeviceException(Throwable cause) {
+            super(cause);
+        }
+    }
 }
