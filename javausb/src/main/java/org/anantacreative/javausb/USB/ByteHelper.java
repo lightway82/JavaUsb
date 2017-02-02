@@ -276,6 +276,17 @@ public class ByteHelper {
     }
 
     /**
+     * Преобразует массив байт в список байт
+     * @param src Исходный массив байт
+     * @return
+     */
+    public static List<Byte> byteArrayToByteList(byte[] src){
+        List<Byte> dst=new ArrayList<>();
+        for(int i=0;i<src.length;i++) dst.add(src[i]);
+        return dst;
+    }
+
+    /**
      * Преобразует байтовый массив в строку
      * @param array байтовый массив
      * @param byteInLine сколько байт на линию в строке, до переноса
