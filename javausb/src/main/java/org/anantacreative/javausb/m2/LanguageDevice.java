@@ -43,7 +43,7 @@ public class LanguageDevice {
      * @throws NoLangDeviceSupported
      */
     public static List<Byte> getBytesInDeviceLang(String src, String abbr) throws  NoLangDeviceSupported {
-        if(langs.containsKey(abbr)) throw new NoLangDeviceSupported(abbr);
+        if(!langs.containsKey(abbr)) throw new NoLangDeviceSupported(abbr);
         LanguageDevice  ld=langs.get(abbr);
         try {
             return ByteHelper.byteArrayToByteList(src.getBytes(ld.getEncodedType()));
@@ -52,6 +52,15 @@ public class LanguageDevice {
         }
     }
 
+    /**
+     *
+     * @param abbr
+     * @return
+     */
+    public static LanguageDevice getDeviceLang(String abbr){
+         return langs.get(abbr);
+
+    }
 
     /**
      * Не поддерживается язык устройством

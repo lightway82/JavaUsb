@@ -22,6 +22,7 @@ public class M2Program {
     private String name;
     private String langAbbr;
     private static final  int MAX_PROGRAM_ID_VALUE=(int)Math.pow(2,Byte.SIZE*3)-1;
+    private static final int MAX_NAME_LENGTH=(int)Math.pow(2,Byte.SIZE)-1;
 
 
 
@@ -34,8 +35,11 @@ public class M2Program {
     public M2Program(List<Double> frequencies, int programID, String name, String langAbbr) throws MinFrequenciesBoundException, MaxProgramIDValueBoundException, ZeroValueFreqException {
             //if(programID > MAX_PROGRAM_ID_VALUE) throw new MaxProgramIDValueBoundException();
         this.programID=programID;
+
         this.name = name;
         this.langAbbr = langAbbr;
+        if(this.name.length()>MAX_NAME_LENGTH)this.name=this.name.substring(0,MAX_NAME_LENGTH);
+
         if(frequencies.size()==0) throw new MinFrequenciesBoundException();
 
 
@@ -159,22 +163,23 @@ public class M2Program {
         List<Byte> bytesName =  LanguageDevice.getBytesInDeviceLang(name,langAbbr);
 
         int partition1=frequencies.size()/3;
-        int ostatok =frequencies.size()-partition1;
+        int ostatok =frequencies.size()-partition1*3;
 
         res.add((byte)bytesName.size());//размер строки названия
         res.addAll(bytesName);//имя программы
 
         //частоты
-        for(int i=0;i<partition1;i+=3){
+
+        for(int i=0;i<partition1;i++){
             res.add((byte)3);
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i), ByteOrder.BIG_TO_SMALL));
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i+1), ByteOrder.BIG_TO_SMALL));
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i+2), ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3), ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3+1), ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3+2), ByteOrder.BIG_TO_SMALL));
         }
 
         if( ostatok !=0){
             res.add((byte)ostatok);
-            for(int i=partition1;i<frequencies.size();i++){
+            for(int i=partition1*3;i<frequencies.size();i++){
                 res.addAll(intToByteList(frequenciesInDeviceFormat.get(i), ByteOrder.BIG_TO_SMALL));
             }
         }

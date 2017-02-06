@@ -18,18 +18,23 @@ public class M2Complex
    private static final  int MAX_PAUSE = (int)Math.pow(2,Short.SIZE)-1;
    private static final  int MAX_TIME_BY_FREQ = (int)Math.pow(2,Short.SIZE)-1;
    private int lastComplexInArrayPosition;
-
+   private static final int MAX_NAME_LENGTH=(int)Math.pow(2,Byte.SIZE)-1;
+   private String name;
+   private String langAbbr;
 
     /**
      *
-     * @param pauseBetweenPrograms время паузы между программами в минутах
-     * @param timeByFrequency время на частоту в минутах
+     * @param pauseBetweenPrograms время паузы между программами в секундах
+     * @param timeByFrequency время на частоту в секундах
      * @throws MaxPauseBoundException
      * @throws MaxTimeByFreqBoundException
      */
-    public M2Complex(int pauseBetweenPrograms, int timeByFrequency) throws MaxPauseBoundException, MaxTimeByFreqBoundException {
+    public M2Complex(int pauseBetweenPrograms, int timeByFrequency, String name, String langAbbr) throws MaxPauseBoundException, MaxTimeByFreqBoundException {
         this.pauseBetweenPrograms = pauseBetweenPrograms;
         this.timeByFrequency = timeByFrequency;
+        this.name = name;
+        this.langAbbr = langAbbr;
+        if(this.name.length()>MAX_NAME_LENGTH)this.name=this.name.substring(0,MAX_NAME_LENGTH);
         if(this.pauseBetweenPrograms>=MAX_PAUSE)  throw new MaxPauseBoundException();
         if(this.timeByFrequency>=MAX_TIME_BY_FREQ) throw new MaxTimeByFreqBoundException();
 
@@ -89,6 +94,7 @@ public class M2Complex
      */
     public void addProgram(M2Program p) throws MaxCountProgramBoundException {
         if(programs.size() >= MAX_PROGRAM_COUNT_IN_COMPLEX )throw new MaxCountProgramBoundException();
+        programs.add(p);
     }
 
     public int getPauseBetweenPrograms() {
@@ -99,21 +105,30 @@ public class M2Complex
         return timeByFrequency;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getLangAbbr() {
+        return langAbbr;
+    }
+
     public int getCountPrograms(){return programs.size();}
 
-    protected List<Byte> toByteList() throws ZeroCountProgramBoundException {
+    protected List<Byte> toByteList() throws ZeroCountProgramBoundException, LanguageDevice.NoLangDeviceSupported {
 
         if(programs.size()==0) throw new ZeroCountProgramBoundException();
 
         List<Byte> res=new ArrayList<>();
+        List<Byte> bytesName =  LanguageDevice.getBytesInDeviceLang(name,langAbbr);
 
-        //количество программ в комплексе 1 байт
-        res.add((byte)getCountPrograms());
-        // пауза между программами 1 байт
-        res.add((byte)pauseBetweenPrograms);
-        // время на частоту 1 байт
-        res.add((byte)timeByFrequency);
-        //программы
+        res.add((byte)bytesName.size());//размер строки названия
+        res.addAll(bytesName);//имя программы
+        res.add((byte)LanguageDevice.getDeviceLang(langAbbr).getDeviceLangID());//ID языка
+        res.addAll(ByteHelper.intTo2ByteList(getPauseBetweenPrograms(),ByteHelper.ByteOrder.BIG_TO_SMALL));
+        res.addAll(ByteHelper.intTo2ByteList(getTimeByFrequency(),ByteHelper.ByteOrder.BIG_TO_SMALL));
+        res.addAll(ByteHelper.intTo2ByteList(getCountPrograms(),ByteHelper.ByteOrder.BIG_TO_SMALL));
+
         for (M2Program program : programs)   res.addAll(program.toByteList());
 
         return res;
@@ -168,6 +183,7 @@ public class M2Complex
                 "countPrograms = "+programs.size()+
                 "  pauseBetweenPrograms=" +pauseBetweenPrograms+
                 ", timeByFrequency=" + timeByFrequency +
+                ", name="+name+
                 ", lastComplexInArrayPosition=" + lastComplexInArrayPosition +
                 "\nprograms={\n";
 

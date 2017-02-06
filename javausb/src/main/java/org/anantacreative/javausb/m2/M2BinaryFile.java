@@ -12,16 +12,14 @@ import java.util.stream.Collectors;
 public class M2BinaryFile {
 
     private final List<M2Complex> complexesList=new ArrayList<>();
-    public static final int MAX_FILE_BYTES=6912;
-    private static final int PROGRAM_ID_BYTE_SIZE=3;//сколько байт занимает индекс программы в файле
+    public static final int MAX_FILE_BYTES=100000;
     private static final int ALIGN_FILE_BYTE_SIZE=64;//длина файла должна быть кратна ALIGN_FILE_BYTE_SIZE
 
 
-    public M2BinaryFile(M2Complex complex1, M2Complex complex2, M2Complex complex3) {
-        complexesList.add(complex1);
-        complexesList.add(complex2);
-        complexesList.add(complex3);
+public M2BinaryFile() {
     }
+
+    public void addComplex(M2Complex complex){complexesList.add(complex);}
 
     /**
      * Переводит байтовые данные в структуру данных
@@ -29,6 +27,7 @@ public class M2BinaryFile {
      */
     public M2BinaryFile(byte[] fileData) throws FileParseException {
         //всего 3 комплекса. Ограничение прибора.
+       /*
         try {
             M2Complex m2Complex1 = new M2Complex(fileData, 0);
             complexesList.add(m2Complex1);
@@ -60,7 +59,7 @@ public class M2BinaryFile {
         } catch (Exception e) {
             throw new FileParseException(e);
         }
-
+*/
     }
 
     public List<M2Complex> getComplexesList() {
@@ -69,31 +68,31 @@ public class M2BinaryFile {
 
 
 
-    public  byte [] getData() throws MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException {
-        //количество програм в комплексе 1 байт
-        // пауза между програмами 1 байт
-        // время на частоту 1 байт
-        //програма1 - количество частот 1байт, по 4 байта сами частоты
-        //програма2 - количество частот 1байт, по 4 байта сами частоты
-        //програма3 - количество частот 1байт, по 4 байта сами частоты
-        //...
-        //индексы программ по 3 байта, в порядке их записи.
-
+    public  byte [] getData() throws MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException, LanguageDevice.NoLangDeviceSupported {
 
 
         final List<Byte> res=new ArrayList<>();
+        final List<List<Byte>> complexesData=new ArrayList<>();
 
 
 
         for (M2Complex m2Complex : complexesList) {
-            res.addAll(m2Complex.toByteList());
+            complexesData.add(m2Complex.toByteList());
         }
 
-        for (M2Complex m2Complex : complexesList){
-            for (M2Program m2Program : m2Complex.getPrograms()) {
-                res.addAll(ByteHelper.intTo3ByteList(m2Program.getProgramID(), ByteHelper.ByteOrder.BIG_TO_SMALL));
-            }
 
+
+        int currentAdr=4*complexesList.size();
+
+        for (int i=0; i<complexesData.size();i++) {
+
+
+            res.addAll(ByteHelper.intToByteList(currentAdr, ByteHelper.ByteOrder.BIG_TO_SMALL));
+            currentAdr += complexesData.get(i).size();
+        }
+
+        for (List<Byte> cData : complexesData) {
+            res.addAll(cData);
         }
 
 

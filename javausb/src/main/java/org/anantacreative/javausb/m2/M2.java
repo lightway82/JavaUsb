@@ -1,13 +1,6 @@
 package org.anantacreative.javausb.m2;
 
 
-import org.anantacreative.javausb.USB.ByteHelper;
-import org.anantacreative.javausb.USB.USBHelper;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-
 public class M2
 {
     public static final  short vendorId=(short)0xfc58;
@@ -30,14 +23,14 @@ public class M2
     public static M2BinaryFile readFromDevice(final boolean debug) throws ReadFromDeviceException {
 
 
-
+        return null;
     }
 
     /**
      * Запись комплексов
      * @param data
      */
-    public static void writeToDevice(M2BinaryFile data) throws M2BinaryFile.MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException, WriteToDeviceException {
+    public static void writeToDevice(M2BinaryFile data) throws M2BinaryFile.MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException, WriteToDeviceException, LanguageDevice.NoLangDeviceSupported {
 
         byte[] dataToWrite = data.getData();
         writeToDevice(dataToWrite);
