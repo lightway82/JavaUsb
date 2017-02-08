@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 @AllArgsConstructor
@@ -52,6 +53,15 @@ public class LanguageDevice {
         }
     }
 
+
+    public static LanguageDevice getLanguage(int id){
+        Optional<LanguageDevice> first = langs.entrySet()
+                                                                 .stream()
+                                                                 .map(e->e.getValue())
+                                                                 .filter(l -> l.getDeviceLangID() == id)
+                                                                 .findFirst();
+        return first.orElseGet(null);
+    }
     /**
      *
      * @param abbr

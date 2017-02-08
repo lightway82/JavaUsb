@@ -216,6 +216,32 @@ public class ByteHelper {
         return (val[startPos] & 0xFF);
     }
 
+
+    /**
+     * Получает строку из масиива байт, закодированную в кодировке  srcEncode
+     * @param val
+     * @param startPos
+     * @param size
+     * @param order
+     * @param srcEncode
+     * @return
+     * @throws Exception
+     */
+    public static String byteArrayToString(byte[] val, int startPos,int size, ByteOrder order, String srcEncode) throws Exception{
+
+       byte src[]=new byte[size];
+
+        if(order==ByteOrder.BIG_TO_SMALL){
+            for(int i=0;i<size;i++)src[i]=val[startPos+i];
+        }else  for(int i=size-1;i<=0;i--)src[i]=val[startPos+i];
+
+        return new String(src,srcEncode);
+
+
+    }
+
+
+
     /**
      * Преобразует в int до 4  байтов(задается startPos и stopPos)
      * @param val байтовый массив

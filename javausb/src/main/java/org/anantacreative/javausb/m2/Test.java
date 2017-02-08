@@ -128,6 +128,8 @@ public class Test
 
 
             byte[] data = binaryFile.getData();
+
+            /*
             System.out.println("Образец="+testResult.length+"  результат="+data.length );
             System.out.println("--Образец--+--Результат--");
             for (int i=0;i<data.length;i++) {
@@ -135,7 +137,9 @@ public class Test
                 System.out.println(testResult[i]+" "+(data[i]<0?data[i]+256:data[i]));
 
             }
-
+*/
+            M2BinaryFile parsed=new M2BinaryFile(data);
+            System.out.println(parsed);
 
         } catch (M2Complex.MaxPauseBoundException e) {
             e.printStackTrace();
@@ -154,6 +158,8 @@ public class Test
         } catch (LanguageDevice.NoLangDeviceSupported noLangDeviceSupported) {
             noLangDeviceSupported.printStackTrace();
         } catch (M2Complex.ZeroCountProgramBoundException e) {
+            e.printStackTrace();
+        } catch (M2BinaryFile.FileParseException e) {
             e.printStackTrace();
         }
 

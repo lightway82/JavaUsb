@@ -59,23 +59,53 @@ public class M2Program {
      *
      * @param programInBytes
      */
-    public M2Program(byte[] programInBytes, int startPosition) throws ProgramParseException {
+    public M2Program(byte[] programInBytes, int startPosition, LanguageDevice lang) throws ProgramParseException {
         int position = startPosition;
         frequenciesInDeviceFormat = new ArrayList<>();
+ /*
+        програма1:
+                1 байт  - колличество символов названия программы ( желательно ограничить до 20 символов )
+                n  байт - название программы ( желательно ограничить до 20 символов )
+                1  байт  - z колличество частот в воспроизводимых за раз(сейчас всегда три)
+                z раз по 4-е байта частоты
+                  1  байт  - z колличество частот в воспроизводимых за раз(сейчас всегда три, последний кусок может быть меньше 3)
+                z раз по 4-е байта частоты
+                ...
+                 if(колличество частот воспроизводимых за раз == 0) признак конца программы
 
+
+         */
         try {
+            int countSymbols=byteArray1ToInt(programInBytes, position++);//уолличество символов в названии программы
+
+             name = byteArrayToString(programInBytes,
+                    position,
+                    countSymbols,
+                    ByteOrder.BIG_TO_SMALL,
+                    lang.getEncodedType());
+
+            langAbbr=lang.getAbbr();
+            position += countSymbols;//4 байта
+
+
             int countFreq = byteArray1ToInt(programInBytes, position++);//первый байт содержит количество частот
-            if (countFreq == 0) throw new ZeroFrequenciesException();
 
-            for (int i = 0; i < countFreq; i++) {
+            while(countFreq!=0){
 
-                frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteOrder.BIG_TO_SMALL));
-                position += FREQ_NUM_BYTES;//4 байта
+                for (int i = 0; i < countFreq; i++) {
 
+                    frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteOrder.BIG_TO_SMALL));
+                    position += FREQ_NUM_BYTES;//4 байта
+
+                }
+                countFreq = byteArray1ToInt(programInBytes, position++);
             }
             //последняя позиция в массиве программы
             lastPositionInArray=position-1;
             frequenciesInDeviceFormat.forEach(f -> frequencies.add(freqFromDeviceFormat(f)));
+
+
+
 
 
         } catch (ZeroFrequenciesException e) {

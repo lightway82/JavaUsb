@@ -1,11 +1,11 @@
 package org.anantacreative.javausb.m2;
 
 
-import org.anantacreative.javausb.USB.ByteHelper;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.anantacreative.javausb.USB.ByteHelper.*;
 
 
 public class M2Complex
@@ -48,20 +48,53 @@ public class M2Complex
     public M2Complex(byte[] complexData, int startPosition) throws ComplexParseException {
         int position = startPosition;
         int countPrograms =0;
+
+        /**
+         * 1 байт размер строки названия комплекса
+         * n байт строка
+         * 1 байт id языка
+         * 2 байта  - пауза между программами
+         * 2 байта время на частоту
+         * 2 байта колличество программ
+         * - --программы
+         */
         try {
-            //количество программ в комплексе 1 байт
-             countPrograms= ByteHelper.byteArray1ToInt(complexData,position++);
+
+
+            int countSymbols=byteArray1ToInt(complexData, position++);//уолличество символов в названии программы
+            int lang= byteArray1ToInt(complexData,position+countSymbols);
+            LanguageDevice language = LanguageDevice.getLanguage(lang);
+
+
+            name = byteArrayToString(complexData,
+                    position,
+                    countSymbols,
+                    ByteOrder.BIG_TO_SMALL,
+                    language.getEncodedType());
+
+            langAbbr=language.getAbbr();
+            position += countSymbols;//4 байта
+            position++;//пропустим id языка
+
 
 
             // пауза между программами 1 байт
-            this.pauseBetweenPrograms = ByteHelper.byteArray1ToInt(complexData,position++);
+            this.pauseBetweenPrograms = byteArray2ToInt(complexData,position,ByteOrder.BIG_TO_SMALL);
+            position+=2;
+
             // время на частоту 1 байт
-            this.timeByFrequency = ByteHelper.byteArray1ToInt(complexData,position++);
+            this.timeByFrequency = byteArray2ToInt(complexData,position,ByteOrder.BIG_TO_SMALL);
+            position+=2;
+
+            //количество программ в комплексе 1 байт
+            countPrograms= byteArray2ToInt(complexData,position,ByteOrder.BIG_TO_SMALL);
+            position+=2;
+
             //программы
 
             for(int i=0;i<countPrograms;i++){
 
-                M2Program m2Program  = new M2Program(complexData, position );
+                M2Program m2Program  = new M2Program(complexData, position,language);
                 programs.add(m2Program);
                 position = m2Program.getLastPositionInArray()+1;//укажет на след. стартовую поз. программы
 
@@ -122,12 +155,22 @@ public class M2Complex
         List<Byte> res=new ArrayList<>();
         List<Byte> bytesName =  LanguageDevice.getBytesInDeviceLang(name,langAbbr);
 
+
+        /**
+         * 1 байт размер строки названия комплекса
+         * n байт строка
+         * 1 байт id языка
+         * 2 байта  - пауза между программами
+         * 2 байта время на частоту
+         * 2 байта колличество программ
+         * - --программы
+         */
         res.add((byte)bytesName.size());//размер строки названия
         res.addAll(bytesName);//имя программы
         res.add((byte)LanguageDevice.getDeviceLang(langAbbr).getDeviceLangID());//ID языка
-        res.addAll(ByteHelper.intTo2ByteList(getPauseBetweenPrograms(),ByteHelper.ByteOrder.BIG_TO_SMALL));
-        res.addAll(ByteHelper.intTo2ByteList(getTimeByFrequency(),ByteHelper.ByteOrder.BIG_TO_SMALL));
-        res.addAll(ByteHelper.intTo2ByteList(getCountPrograms(),ByteHelper.ByteOrder.BIG_TO_SMALL));
+        res.addAll(intTo2ByteList(getPauseBetweenPrograms(), ByteOrder.BIG_TO_SMALL));
+        res.addAll(intTo2ByteList(getTimeByFrequency(), ByteOrder.BIG_TO_SMALL));
+        res.addAll(intTo2ByteList(getCountPrograms(), ByteOrder.BIG_TO_SMALL));
 
         for (M2Program program : programs)   res.addAll(program.toByteList());
 

@@ -26,40 +26,30 @@ public M2BinaryFile() {
      * @param fileData
      */
     public M2BinaryFile(byte[] fileData) throws FileParseException {
-        //всего 3 комплекса. Ограничение прибора.
-       /*
+
+        //4 байта - позиция перед началом первого комплекса
+
         try {
-            M2Complex m2Complex1 = new M2Complex(fileData, 0);
-            complexesList.add(m2Complex1);
+            int position=ByteHelper.byteArray4ToInt(fileData,0, ByteHelper.ByteOrder.BIG_TO_SMALL);
+            int countComplexes=position/4;
 
-            M2Complex m2Complex2 = new M2Complex(fileData, m2Complex1.getLastComplexInArrayPosition()+1);
-            complexesList.add(m2Complex2);
+            M2Complex m2Complex;
+         for (int i=0;i<countComplexes;i++){
 
-            M2Complex m2Complex3 = new M2Complex(fileData, m2Complex2.getLastComplexInArrayPosition()+1);
-            complexesList.add(m2Complex3);
+              m2Complex = new M2Complex(fileData, position);
+             complexesList.add(m2Complex);
+             position=m2Complex.getLastComplexInArrayPosition()+1;
 
-            ///как определить сколько комплексов записано. Их всегда должно быть три!!! И в каждом хотябы 1 программа
-
-            int countAllProgram =m2Complex1.getCountPrograms()+m2Complex2.getCountPrograms()+m2Complex3.getCountPrograms();
-            int nextReadPosition=m2Complex3.getLastComplexInArrayPosition()+1;
-
-            for (M2Complex complex : complexesList) {
-
-                for (M2Program program : complex.getPrograms()) {
-                    program.setProgramID(ByteHelper.byteArray3ToInt(fileData,nextReadPosition, ByteHelper.ByteOrder.BIG_TO_SMALL));
-                    nextReadPosition+=PROGRAM_ID_BYTE_SIZE;
-
-                }
-
-            }
+         }
 
 
-        } catch (M2Complex.ComplexParseException e) {
-           throw new FileParseException(e);
+        }  catch (M2Complex.ComplexParseException e) {
+            throw new FileParseException(e);
         } catch (Exception e) {
             throw new FileParseException(e);
         }
-*/
+
+
     }
 
     public List<M2Complex> getComplexesList() {
