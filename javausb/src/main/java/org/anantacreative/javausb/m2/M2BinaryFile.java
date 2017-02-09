@@ -14,18 +14,29 @@ public class M2BinaryFile {
     private final List<M2Complex> complexesList=new ArrayList<>();
     public static final int MAX_FILE_BYTES=786432;
     private static final int ALIGN_FILE_BYTE_SIZE=64;//длина файла должна быть кратна ALIGN_FILE_BYTE_SIZE
-
+    private  byte[] rawReadedData;
+    private int systemLangID;
 
 public M2BinaryFile() {
     }
 
+    public int getSystemLangID() {
+        return systemLangID;
+    }
+
     public void addComplex(M2Complex complex){complexesList.add(complex);}
+
+    public byte[] getRawReadedData() {
+        return rawReadedData;
+    }
 
     /**
      * Переводит байтовые данные в структуру данных
      * @param fileData
      */
-    public M2BinaryFile(byte[] fileData) throws FileParseException {
+    public M2BinaryFile(byte[] fileData,int systemLangID) throws FileParseException {
+        rawReadedData = fileData;
+        this.systemLangID=systemLangID;
 
         //4 байта - позиция перед началом первого комплекса
 

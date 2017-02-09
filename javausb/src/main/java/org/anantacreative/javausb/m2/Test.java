@@ -148,7 +148,7 @@ public class Test
             try {
     byte[] data = testData().getData();
 
-            M2BinaryFile parsed=new M2BinaryFile(data);
+            M2BinaryFile parsed=new M2BinaryFile(data,1);
             System.out.println(parsed);
 
         } catch (M2Complex.MaxPauseBoundException e) {

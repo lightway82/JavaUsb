@@ -16,6 +16,9 @@ public class M2
 
     private static final  byte READ_COMMAND = 0x34;
     private static final  byte WRITE_COMMAND = 0x33;
+    private static final  byte READ_DEVICE_NAME = 50;
+    private static final  byte CLEAR_COMMAND = 53;
+    private static final  byte LANG_LIST_COMMAND = 54;
     private static final  int REQUEST_TIMEOUT_MS = 10000;
     private static final  int DATA_PACKET_SIZE=64;
 
@@ -29,11 +32,66 @@ public class M2
     public static M2BinaryFile readFromDevice(final boolean debug) throws ReadFromDeviceException {
 
 
-        return null;
+
+        USBHelper.USBDeviceHandle usbDeviceHandle=null;
+        M2BinaryFile m2BinaryFile=null;
+        try {
+            usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
+            byte[] commandRead = new byte[DATA_PACKET_SIZE];
+            commandRead[0]=READ_COMMAND;
+            USBHelper.write(usbDeviceHandle,commandRead,OUT_END_POINT,REQUEST_TIMEOUT_MS);
+
+            Response response = readResponseBuffer(usbDeviceHandle,debug);
+            if(response.status==false) throw new DeviceFailException(response.errorCode);
+
+            int size=ByteHelper.byteArray4ToInt(response.getPayload(),0, ByteHelper.ByteOrder.BIG_TO_SMALL);
+            int langID=ByteHelper.byteArray1ToInt(response.getPayload(),4);
+
+            int packets = (int)Math.ceil(size / DATA_PACKET_SIZE);
+            if(debug) System.out.println("packets = "+packets);
+            if(debug) System.out.println("___________________");
+
+            byte[] deviceData = new byte[DATA_PACKET_SIZE*packets];
+            ByteBuffer  data;
+            for(int i=0;i<packets;i++){
+
+                //читаем
+                data = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+                data.position(0);
+
+                data.get(deviceData,i*DATA_PACKET_SIZE,DATA_PACKET_SIZE);
+
+            }
+            if(debug) System.out.println(ByteHelper.bytesToHex(deviceData,16,' '));
+            if(debug) System.out.print("Parse data...");
+
+
+
+            m2BinaryFile = new M2BinaryFile(deviceData,langID);
+
+        }  catch (USBHelper.USBException e) {
+            throw new ReadFromDeviceException(e);
+        } catch (M2BinaryFile.FileParseException e) {
+            throw new ReadFromDeviceException(e);
+        } catch (DeviceFailException e) {
+            throw new ReadFromDeviceException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+
+            try {
+                USBHelper.closeDevice(usbDeviceHandle,0);
+            } catch (USBHelper.USBException e) {
+
+            }
+        }
+
+        return m2BinaryFile;
+
     }
 
 
-    public static String readDeviceName() throws WriteToDeviceException {
+    public static String readDeviceName(boolean debug) throws WriteToDeviceException {
         USBHelper.USBDeviceHandle usbDeviceHandle=null;
        String str="";
         try{
@@ -41,26 +99,23 @@ public class M2
 
             usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
             byte[] commandWrite = new byte[DATA_PACKET_SIZE];
-            commandWrite[0]=50;
+            commandWrite[0]=READ_DEVICE_NAME;
 
             //команда на запись
             USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,REQUEST_TIMEOUT_MS);
 
-            ByteBuffer writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+            Response response = readResponseBuffer(usbDeviceHandle,debug);
+            if(response.status==false) throw new DeviceFailException(response.errorCode);
 
-            writeResponse.position(0);
-            byte[] bytes2 = new byte[DATA_PACKET_SIZE];
-            writeResponse.get(bytes2);
             int strSize=0;
-            for(int i=0;i<bytes2.length;i++){
-                if(bytes2[i]==0){
-                   strSize=i;
-                   break;
+            for(int i=0;i<response.getPayload().length;i++){
+                if(response.getPayload()[i]==0){
+                    strSize=i;
+                    break;
                 }
             }
 
-            str= ByteHelper.byteArrayToString(bytes2,0,strSize, ByteHelper.ByteOrder.BIG_TO_SMALL,"Cp1250");
-
+            str= ByteHelper.byteArrayToString(response.getPayload(),0,strSize, ByteHelper.ByteOrder.BIG_TO_SMALL,"Cp1250");
 
 
         } catch (USBHelper.USBException e) {
@@ -81,10 +136,10 @@ public class M2
      * Запись комплексов
      * @param data
      */
-    public static void writeToDevice(M2BinaryFile data,int langID) throws M2BinaryFile.MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException, LanguageDevice.NoLangDeviceSupported, WriteToDeviceException {
+    public static void writeToDevice(M2BinaryFile data,int langID,boolean debug) throws M2BinaryFile.MaxBytesBoundException, M2Complex.ZeroCountProgramBoundException, LanguageDevice.NoLangDeviceSupported, WriteToDeviceException {
 
         byte[] dataToWrite = data.getData();
-        writeToDevice(dataToWrite,langID,data.getComplexesList().size());
+        writeToDevice(dataToWrite,langID,data.getComplexesList().size(),debug);
 
 
     }
@@ -92,12 +147,12 @@ public class M2
 
 
 
-    private static void writeToDevice(byte[] dataToWrite, int langID,int countComplexes) throws WriteToDeviceException {
+    private static void writeToDevice(byte[] dataToWrite, int langID,int countComplexes,boolean debug) throws WriteToDeviceException {
         USBHelper.USBDeviceHandle usbDeviceHandle=null;
         try{
             System.out.print("Write command send..");
 
-            usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
+            if(debug) usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
             byte[] commandWrite = new byte[DATA_PACKET_SIZE];
             commandWrite[0]=WRITE_COMMAND;
 
@@ -109,45 +164,40 @@ public class M2
 
             commandWrite[5]=(byte)langID;
             commandWrite[6]=(byte)countComplexes;
-            System.out.print("COMMAND PACKET = ");
 
-            for (int i=0;i<commandWrite.length;i++) {
+            if(debug) {
+                System.out.print("COMMAND PACKET = ");
 
-                System.out.print((commandWrite[i]<0?commandWrite[i]+256:commandWrite[i])+", ");
+                for (int i = 0; i < commandWrite.length; i++) {
 
+                    System.out.print((commandWrite[i] < 0 ? commandWrite[i] + 256 : commandWrite[i]) + ", ");
+
+                }
+                System.out.println("OUT_END_POINT=" + OUT_END_POINT + " IN_END_POINT=" + IN_END_POINT);
             }
-            System.out.println("OUT_END_POINT="+OUT_END_POINT+" IN_END_POINT="+IN_END_POINT);
 
             //команда на запись
             USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,REQUEST_TIMEOUT_MS);
-            System.out.print("READ RESPONSE...");
-            ByteBuffer writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
 
-            writeResponse.position(0);
-            byte[] bytes2 = new byte[DATA_PACKET_SIZE];
-            writeResponse.get(bytes2);
-            System.out.println("Device response: "+ByteHelper.bytesToHex(bytes2,64,' '));
-            System.out.println("OK");
+            Response response = readResponseBuffer(usbDeviceHandle,debug);
+            if(response.status==false) throw new DeviceFailException(response.errorCode);
 
 
-
-            System.out.print("WRITE DATA...");
+            if(debug)System.out.println("WRITE DATA...");
 
             //запись всего пакета в прибор по 64 байта. Нужно не забыть проверять ответ и статус записи, чтобы отловить ошибки
             for(int i=0;i < dataToWrite.length/DATA_PACKET_SIZE;i++){
-                System.out.print("WRITE 64 byte...");
+
                 USBHelper.write(usbDeviceHandle, Arrays.copyOfRange(dataToWrite,DATA_PACKET_SIZE*i,DATA_PACKET_SIZE*i+DATA_PACKET_SIZE),OUT_END_POINT,REQUEST_TIMEOUT_MS);            //читаем
-                writeResponse = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
-                writeResponse.position(0);
-                byte[] bytes3 = new byte[DATA_PACKET_SIZE];
-                writeResponse.get(bytes3);
-                System.out.println("Device response: "+ByteHelper.bytesToHex(bytes3,64,' '));
-                System.out.println(i);
+                 response = readResponseBuffer(usbDeviceHandle,debug);
+                if(response.status==false) throw new DeviceFailException(response.errorCode);
             }
 
         } catch (USBHelper.USBException e) {
             throw new WriteToDeviceException(e);
-        }finally {
+        } catch (DeviceFailException e) {
+            throw new WriteToDeviceException(e);
+        } finally {
             try {
                 USBHelper.closeDevice(usbDeviceHandle,0);
             } catch (USBHelper.USBException e) {
@@ -156,11 +206,61 @@ public class M2
         }
     }
 
+
+    /**
+     * Читает буффер ответа
+     * @param usbDeviceHandle
+     * @return Response
+     * @throws USBHelper.USBException
+     */
+    private static Response readResponseBuffer( USBHelper.USBDeviceHandle usbDeviceHandle,boolean debug) throws USBHelper.USBException {
+
+        if(debug)System.out.print("READ RESPONSE...");
+        ByteBuffer  response = USBHelper.read(usbDeviceHandle, DATA_PACKET_SIZE, IN_END_POINT, REQUEST_TIMEOUT_MS);
+        response.position(0);
+        byte[] bytes = new byte[DATA_PACKET_SIZE];
+        response.get(bytes);
+
+        if(debug)System.out.println("Device response: "+ByteHelper.bytesToHex(bytes,64,' '));
+
+        Response resp=new Response(bytes[0]==0?true:false,bytes[1]);
+        int j=0;
+        for(int i=2;i<DATA_PACKET_SIZE;i++)resp.getPayload()[j++]=bytes[i];
+
+        return resp;
+    }
+
     /**
      * Очистка устройства
      */
-    public static void clearDevice() throws WriteToDeviceException {
-        writeToDevice(new byte[M2BinaryFile.MAX_FILE_BYTES],1,0);
+    public static void clearDevice(boolean debug) throws WriteToDeviceException {
+
+        USBHelper.USBDeviceHandle usbDeviceHandle=null;
+        try{
+
+            if(debug) usbDeviceHandle = USBHelper.openDevice(productId, vendorId, 0);
+            byte[] commandWrite = new byte[DATA_PACKET_SIZE];
+            commandWrite[0]=CLEAR_COMMAND;
+
+            //команда на запись
+            USBHelper.write(usbDeviceHandle,commandWrite,OUT_END_POINT,REQUEST_TIMEOUT_MS);
+
+            if(debug)System.out.print("READ RESPONSE...");
+
+            Response response = readResponseBuffer(usbDeviceHandle,debug);
+            if(response.status==false) throw new DeviceFailException(response.errorCode);
+
+        } catch (USBHelper.USBException e) {
+            throw new WriteToDeviceException(e);
+        } catch (DeviceFailException e) {
+            throw new WriteToDeviceException(e);
+        } finally {
+            try {
+                USBHelper.closeDevice(usbDeviceHandle,0);
+            } catch (USBHelper.USBException e) {
+
+            }
+        }
     }
 
 
@@ -171,8 +271,75 @@ public class M2
         }
     }
     public static class WriteToDeviceException extends Exception{
+
         public WriteToDeviceException(Throwable cause) {
             super(cause);
         }
+        public WriteToDeviceException() {
+            super();
+
+        }
+
+    }
+
+
+    public static class DeviceFailException extends Exception{
+        private int errorCode;
+        private String descr;
+
+
+        public DeviceFailException(int errorCode) {
+            super();
+            descr=getDeviceErrorDescription(errorCode);
+        }
+
+        public String getDescr() {
+            return descr;
+        }
+
+        public int getErrorCode() {
+            return errorCode;
+        }
+    }
+
+
+    private static String getDeviceErrorDescription(int errorCode){
+        String str;
+        switch (errorCode){
+            case 1:
+                str="Data TimeOut Elapsed";
+                break;
+            case 2:
+                str="Data TimeOut Elapsed";
+                break;
+            case 3:
+                str="Data TimeOut Elapsed";
+                break;
+            case 4:
+                str="Data TimeOut Elapsed";
+                break;
+                default:
+                    str="Unknown error code!";
+
+
+        }
+        return str;
+    }
+
+    private static class Response{
+        private boolean status;
+        private int errorCode;
+        private final byte[] payload=new byte[DATA_PACKET_SIZE];
+
+        public Response(boolean status, int errorCode) {
+            this.status = status;
+            this.errorCode = errorCode;
+
+        }
+
+        public byte[] getPayload() {
+            return payload;
+        }
+
     }
 }
