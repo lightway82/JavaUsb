@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java-version>1.8</java-version>
         <log4j.version>2.5</log4j.version>
-        <mainClass>org.anantacreative.javausb.Main</mainClass>
+        <mainClass>org.anantacreative.javausb.Main2</mainClass>
     </properties>
 
 
@@ -54,7 +54,31 @@
                 </configuration>
 
             </plugin>
-
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                            <outputDirectory>${basedir}/target/content</outputDirectory>
+                            <!--   <outputDirectory>${basedir}/content</outputDirectory>  Для отладки в IDE -->
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/not_embedded</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!--****** Копирование зависимостей в папку lib *******-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,6 +99,25 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <!--****** Указывает где либы лежат lib *******-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <classpathLayoutType>simple</classpathLayoutType>
+                            <mainClass>${mainClass}</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Version>1.0</Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
