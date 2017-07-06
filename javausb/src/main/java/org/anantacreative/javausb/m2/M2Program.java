@@ -1,5 +1,7 @@
 package org.anantacreative.javausb.m2;
 
+import org.anantacreative.javausb.USB.ByteHelper;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.anantacreative.javausb.USB.ByteHelper.*;
+import static org.anantacreative.javausb.m2.M2Complex.BUNDLES_LENGTH;
 
 
 public class M2Program {
@@ -25,6 +28,9 @@ public class M2Program {
     private static final int MAX_NAME_LENGTH=(int)Math.pow(2,Byte.SIZE)-1;
 
 
+    public String getName() {
+        return name;
+    }
 
     /**
      * @param frequencies
@@ -59,13 +65,14 @@ public class M2Program {
      *
      * @param programInBytes
      */
-    public M2Program(byte[] programInBytes, int startPosition, LanguageDevice lang) throws ProgramParseException {
+    public M2Program(byte[] programInBytes, int startPosition) throws ProgramParseException {
         int position = startPosition;
         frequenciesInDeviceFormat = new ArrayList<>();
  /*
         програма1:
                 1 байт  - колличество символов названия программы ( желательно ограничить до 20 символов )
                 n  байт - название программы ( желательно ограничить до 20 символов )
+                1 байт код языка
                 1  байт  - z колличество частот в воспроизводимых за раз(сейчас всегда три)
                 z раз по 4-е байта частоты
                   1  байт  - z колличество частот в воспроизводимых за раз(сейчас всегда три, последний кусок может быть меньше 3)
@@ -76,16 +83,20 @@ public class M2Program {
 
          */
         try {
-            int countSymbols=byteArray1ToInt(programInBytes, position++);//уолличество символов в названии программы
+            int countSymbols=byteArray1ToInt(programInBytes, position++);//количество символов в названии программы
+
+            int langID= byteArray1ToInt(programInBytes,position+countSymbols);
+            LanguageDevice lang = LanguageDevice.getLanguage(langID);
 
              name = byteArrayToString(programInBytes,
                     position,
                     countSymbols,
-                    ByteOrder.BIG_TO_SMALL,
+                    ByteHelper.ByteOrder.BIG_TO_SMALL,
                     lang.getEncodedType());
 
             langAbbr=lang.getAbbr();
             position += countSymbols;//4 байта
+            position++;//пропустим id языка
 
 
             int countFreq = byteArray1ToInt(programInBytes, position++);//первый байт содержит количество частот
@@ -94,7 +105,7 @@ public class M2Program {
 
                 for (int i = 0; i < countFreq; i++) {
 
-                    frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteOrder.BIG_TO_SMALL));
+                    frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteHelper.ByteOrder.BIG_TO_SMALL));
                     position += FREQ_NUM_BYTES;//4 байта
 
                 }
@@ -192,24 +203,25 @@ public class M2Program {
         List<Byte> res = new ArrayList<>();
         List<Byte> bytesName =  LanguageDevice.getBytesInDeviceLang(name,langAbbr);
 
-        int partition1=frequencies.size()/3;
-        int ostatok =frequencies.size()-partition1*3;
+        int partition1=frequencies.size()/BUNDLES_LENGTH;
+        int ostatok =frequencies.size()-partition1*BUNDLES_LENGTH;
 
         res.add((byte)bytesName.size());//размер строки названия
         res.addAll(bytesName);//имя программы
+        res.add((byte)LanguageDevice.getDeviceLang(langAbbr).getDeviceLangID());//ID языка
 
         //частоты
 
         for(int i=0;i<partition1;i++){
-            res.add((byte)3);
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3), ByteOrder.BIG_TO_SMALL));
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3+1), ByteOrder.BIG_TO_SMALL));
-            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*3+2), ByteOrder.BIG_TO_SMALL));
+            res.add((byte)BUNDLES_LENGTH);
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*BUNDLES_LENGTH), ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*BUNDLES_LENGTH+1), ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(frequenciesInDeviceFormat.get(i*BUNDLES_LENGTH+2), ByteOrder.BIG_TO_SMALL));
         }
 
         if( ostatok !=0){
             res.add((byte)ostatok);
-            for(int i=partition1*3;i<frequencies.size();i++){
+            for(int i=partition1*BUNDLES_LENGTH;i<frequencies.size();i++){
                 res.addAll(intToByteList(frequenciesInDeviceFormat.get(i), ByteOrder.BIG_TO_SMALL));
             }
         }

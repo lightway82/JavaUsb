@@ -17,6 +17,7 @@ public class M2BinaryFile {
     private  byte[] rawReadedData;
     private int systemLangID;
 
+
 public M2BinaryFile() {
     }
 
@@ -37,11 +38,11 @@ public M2BinaryFile() {
     public M2BinaryFile(byte[] fileData,int systemLangID) throws FileParseException {
         rawReadedData = fileData;
         this.systemLangID=systemLangID;
-
+        if(fileData.length==0) throw new FileParseException("Пустой массиив данных!");
         //4 байта - позиция перед началом первого комплекса
 
         try {
-            int position=ByteHelper.byteArray4ToInt(fileData,0, ByteHelper.ByteOrder.BIG_TO_SMALL);
+            int position= ByteHelper.byteArray4ToInt(fileData,0, ByteHelper.ByteOrder.BIG_TO_SMALL);
             int countComplexes=position/4;
 
             M2Complex m2Complex;
@@ -115,6 +116,10 @@ public M2BinaryFile() {
     public static class FileParseException extends Exception{
         public FileParseException(Throwable cause) {
             super(cause);
+        }
+
+        public FileParseException(String message) {
+            super(message);
         }
     }
 

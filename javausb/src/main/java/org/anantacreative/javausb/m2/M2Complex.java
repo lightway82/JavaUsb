@@ -1,6 +1,9 @@
 package org.anantacreative.javausb.m2;
 
 
+import org.anantacreative.javausb.USB.ByteHelper;
+import org.anantacreative.javausb.USB.ByteHelper.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +24,12 @@ public class M2Complex
    private static final int MAX_NAME_LENGTH=(int)Math.pow(2,Byte.SIZE)-1;
    private String name;
    private String langAbbr;
+
+   public static final int BUNDLES_LENGTH =3;
+
+    public  int getBundlesLength() {
+        return BUNDLES_LENGTH;
+    }
 
     /**
      *
@@ -69,7 +78,7 @@ public class M2Complex
             name = byteArrayToString(complexData,
                     position,
                     countSymbols,
-                    ByteOrder.BIG_TO_SMALL,
+                    ByteHelper.ByteOrder.BIG_TO_SMALL,
                     language.getEncodedType());
 
             langAbbr=language.getAbbr();
@@ -79,7 +88,7 @@ public class M2Complex
 
 
             // пауза между программами 1 байт
-            this.pauseBetweenPrograms = byteArray2ToInt(complexData,position,ByteOrder.BIG_TO_SMALL);
+            this.pauseBetweenPrograms = byteArray2ToInt(complexData,position, ByteHelper.ByteOrder.BIG_TO_SMALL);
             position+=2;
 
             // время на частоту 1 байт
@@ -94,7 +103,7 @@ public class M2Complex
 
             for(int i=0;i<countPrograms;i++){
 
-                M2Program m2Program  = new M2Program(complexData, position,language);
+                M2Program m2Program  = new M2Program(complexData, position);
                 programs.add(m2Program);
                 position = m2Program.getLastPositionInArray()+1;//укажет на след. стартовую поз. программы
 
@@ -128,6 +137,11 @@ public class M2Complex
     public void addProgram(M2Program p) throws MaxCountProgramBoundException {
         if(programs.size() >= MAX_PROGRAM_COUNT_IN_COMPLEX )throw new MaxCountProgramBoundException();
         programs.add(p);
+    }
+
+    public void addPrograms(List<M2Program> programList) throws MaxCountProgramBoundException {
+        if(programList.size()+programs.size() >= MAX_PROGRAM_COUNT_IN_COMPLEX )throw new MaxCountProgramBoundException();
+        programs.addAll(programList);
     }
 
     public int getPauseBetweenPrograms() {

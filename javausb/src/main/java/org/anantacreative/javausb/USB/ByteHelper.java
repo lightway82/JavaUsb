@@ -23,7 +23,7 @@ public class ByteHelper {
      * @return байтовый массив с заданным порядком
      */
     public static  byte[] intToByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.SMALL_TO_BIG)
+        if(order== ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
@@ -48,7 +48,7 @@ public class ByteHelper {
      * @return байтовый массив с заданным порядком
      */
     public static  byte[] intTo3ByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.SMALL_TO_BIG)
+        if(order== ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
@@ -74,7 +74,7 @@ public class ByteHelper {
      * @return байтовый массив с заданным порядком
      */
     public static  byte[] intTo2ByteArray(int value, ByteOrder order ) {
-        if(order==ByteOrder.SMALL_TO_BIG)
+        if(order== ByteOrder.SMALL_TO_BIG)
         {
             return new byte[]{
                     (byte) value,
@@ -101,7 +101,7 @@ public class ByteHelper {
     public static  List<Byte> intToByteList(int value, ByteOrder order ) {
 
         List<Byte> res=new ArrayList<>();
-        if(order==ByteOrder.BIG_TO_SMALL){
+        if(order== ByteOrder.BIG_TO_SMALL){
             res.add((byte)(value >>> 24));
             res.add((byte)(value >>> 16));
             res.add((byte)(value >>> 8));
@@ -126,7 +126,7 @@ public class ByteHelper {
     public static  List<Byte> intTo3ByteList(int value, ByteOrder order ) {
 
         List<Byte> res=new ArrayList<>();
-        if(order==ByteOrder.BIG_TO_SMALL){
+        if(order== ByteOrder.BIG_TO_SMALL){
 
             res.add((byte)(value >>> 16));
             res.add((byte)(value >>> 8));
@@ -151,7 +151,7 @@ public class ByteHelper {
     public static  List<Byte> intTo2ByteList(int value, ByteOrder order ) {
 
         List<Byte> res=new ArrayList<>();
-        if(order==ByteOrder.BIG_TO_SMALL){
+        if(order== ByteOrder.BIG_TO_SMALL){
 
 
             res.add((byte)(value >>> 8));
@@ -216,32 +216,6 @@ public class ByteHelper {
         return (val[startPos] & 0xFF);
     }
 
-
-    /**
-     * Получает строку из масиива байт, закодированную в кодировке  srcEncode
-     * @param val
-     * @param startPos
-     * @param size
-     * @param order
-     * @param srcEncode
-     * @return
-     * @throws Exception
-     */
-    public static String byteArrayToString(byte[] val, int startPos,int size, ByteOrder order, String srcEncode) throws Exception{
-
-       byte src[]=new byte[size];
-
-        if(order==ByteOrder.BIG_TO_SMALL){
-            for(int i=0;i<size;i++)src[i]=val[startPos+i];
-        }else  for(int i=size-1;i<=0;i--)src[i]=val[startPos+i];
-
-        return new String(src,srcEncode);
-
-
-    }
-
-
-
     /**
      * Преобразует в int до 4  байтов(задается startPos и stopPos)
      * @param val байтовый массив
@@ -258,7 +232,7 @@ public class ByteHelper {
         else if(startPos >=val.length || startPos < 0)throw new Exception("startPos должен в пределах индексов массива");
         else if(stopPos >=val.length || startPos < 0)throw new Exception("stopPos должен в пределах индексов массива");
 
-        if(order==ByteOrder.BIG_TO_SMALL) {
+        if(order== ByteOrder.BIG_TO_SMALL) {
             if(len==4) return  ((val[startPos] & 0xFF) << 24) + ((val[startPos+1] & 0xFF) << 16) + ((val[startPos+2] & 0xFF) << 8) + (val[startPos+3] & 0xFF);
             else if(len==3) return    ((val[startPos] & 0xFF) << 16) + ((val[startPos+1] & 0xFF) << 8) + (val[startPos+2] & 0xFF);
             else if(len==2) return     ((val[startPos] & 0xFF) << 8) + (val[startPos+1] & 0xFF);
@@ -285,7 +259,7 @@ public class ByteHelper {
     public static int byteArrayToInt(byte[] val, ByteOrder order) throws Exception {
 
         if(val.length>4) throw new Exception("Массив должен иметь не более 4 элементов");
-        if(order==ByteOrder.BIG_TO_SMALL) {
+        if(order== ByteOrder.BIG_TO_SMALL) {
             if(val.length==4) return  ((val[0] & 0xFF) << 24) + ((val[1] & 0xFF) << 16) + ((val[2] & 0xFF) << 8) + (val[3] & 0xFF);
             else if(val.length==3) return    ((val[0] & 0xFF) << 16) + ((val[1] & 0xFF) << 8) + (val[2] & 0xFF);
             else if(val.length==2) return     ((val[0] & 0xFF) << 8) + (val[1] & 0xFF);
@@ -300,7 +274,6 @@ public class ByteHelper {
             else throw new Exception("Массив должен иметь не более 4 элементов и не менее 1");
         }
     }
-
     /**
      * Преобразует массив байт в список байт
      * @param src Исходный массив байт
@@ -310,6 +283,29 @@ public class ByteHelper {
         List<Byte> dst=new ArrayList<>();
         for(int i=0;i<src.length;i++) dst.add(src[i]);
         return dst;
+    }
+
+    /**
+     * Получает строку из масиива байт, закодированную в кодировке  srcEncode
+     * @param val
+     * @param startPos
+     * @param size
+     * @param order
+     * @param srcEncode
+     * @return
+     * @throws Exception
+     */
+    public static String byteArrayToString(byte[] val, int startPos,int size, ByteOrder order, String srcEncode) throws Exception{
+
+        byte src[]=new byte[size];
+
+        if(order== ByteOrder.BIG_TO_SMALL){
+            for(int i=0;i<size;i++)src[i]=val[startPos+i];
+        }else  for(int i=size-1;i<=0;i--)src[i]=val[startPos+i];
+
+        return new String(src,srcEncode);
+
+
     }
 
     /**
@@ -339,5 +335,4 @@ public class ByteHelper {
         }
         return String.valueOf(val);
     }
-
 }
