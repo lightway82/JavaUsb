@@ -29,7 +29,7 @@ public class Main2 {
                     System.out.println("Device read name: "+M2.readDeviceName(false));
 
                     System.out.println("Device read data: ");
-                    M2BinaryFile biofonBinaryFile = M2.readFromDevice(false);
+                    M2BinaryFile biofonBinaryFile = M2.readFromDevice(true);
                     for (int i=0;i<biofonBinaryFile.getRawReadedData().length;i++) {
 
                         System.out.print(biofonBinaryFile.getRawReadedData()[i]<0?biofonBinaryFile.getRawReadedData()[i]+256:biofonBinaryFile.getRawReadedData()[i]);
@@ -44,14 +44,10 @@ public class Main2 {
                     M2BinaryFile binaryFile = test.testData();
 
                     System.out.println("Writed data:");
-                    for (int i=0;i<binaryFile.getRawReadedData().length;i++) {
 
-                        System.out.print(binaryFile.getRawReadedData()[i]<0?binaryFile.getRawReadedData()[i]+256:binaryFile.getRawReadedData()[i]);
-                        System.out.print(", ");
-                    }
                     System.out.println("");
 
-                    M2.writeToDevice(binaryFile,1,false);
+                    M2.writeToDevice(binaryFile,1,true);
 
                     System.out.println("COMPLETED!");
 
