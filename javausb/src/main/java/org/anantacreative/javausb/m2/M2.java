@@ -78,7 +78,7 @@ public class M2
             m2BinaryFile = new M2BinaryFile(deviceData,langID);
 
         }  catch (USBHelper.USBException e) {
-            e.printStackTrace();
+           e.printStackTrace();
             throw new ReadFromDeviceException(e);
         } catch (M2BinaryFile.FileParseException e) {
             e.printStackTrace();
@@ -135,7 +135,7 @@ public class M2
             throw new WriteToDeviceException(e);
         } catch (Exception e) {
             e.printStackTrace();
-            e.printStackTrace();
+
         } finally {
             try {
                 USBHelper.closeDevice(usbDeviceHandle,0);
@@ -210,7 +210,7 @@ public class M2
             }
 
         } catch (USBHelper.USBException e) {
-           e.printStackTrace();
+            e.printStackTrace();
             throw new WriteToDeviceException(e);
         } catch (DeviceFailException e) {
             e.printStackTrace();
@@ -371,7 +371,6 @@ public class M2
         }
 
     }
-
 
 
         private static void printPacket(String name, byte[] packet){

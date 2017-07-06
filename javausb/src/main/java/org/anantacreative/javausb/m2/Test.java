@@ -197,11 +197,10 @@ public class Test
                 System.out.println("Device connected");
                 try {
 
-                    System.out.println("Device read name: "+M2.readDeviceName(true));
+                    System.out.println("Device read name: "+M2.readDeviceName(false));
 
                     System.out.println("Device read data: ");
-                    M2BinaryFile biofonBinaryFile = M2.readFromDevice(true);
-                    if(biofonBinaryFile.getRawReadedData()!=null)
+                    M2BinaryFile biofonBinaryFile = M2.readFromDevice(false);
                     for (int i=0;i<biofonBinaryFile.getRawReadedData().length;i++) {
 
                         System.out.print(biofonBinaryFile.getRawReadedData()[i]<0?biofonBinaryFile.getRawReadedData()[i]+256:biofonBinaryFile.getRawReadedData()[i]);
@@ -216,15 +215,14 @@ public class Test
                     M2BinaryFile binaryFile = test.testData();
 
                     System.out.println("Writed data:");
-                    byte[] data = binaryFile.getData();
-                    for (int i = 0; i< data.length; i++) {
+                    for (int i=0;i<binaryFile.getRawReadedData().length;i++) {
 
-                        System.out.print(data[i]<0?data[i]+256:data[i]);
+                        System.out.print(binaryFile.getRawReadedData()[i]<0?binaryFile.getRawReadedData()[i]+256:binaryFile.getRawReadedData()[i]);
                         System.out.print(", ");
                     }
                     System.out.println("");
 
-                    M2.writeToDevice(binaryFile,1,true);
+                    M2.writeToDevice(binaryFile,1,false);
 
                     System.out.println("COMPLETED!");
 

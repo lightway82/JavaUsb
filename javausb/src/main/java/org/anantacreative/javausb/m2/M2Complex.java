@@ -2,7 +2,6 @@ package org.anantacreative.javausb.m2;
 
 
 import org.anantacreative.javausb.USB.ByteHelper;
-import org.anantacreative.javausb.USB.ByteHelper.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,7 +91,7 @@ public class M2Complex
             position+=2;
 
             // время на частоту 1 байт
-            this.timeByFrequency = byteArray2ToInt(complexData,position,ByteOrder.BIG_TO_SMALL);
+            this.timeByFrequency = byteArray2ToInt(complexData,position, ByteHelper.ByteOrder.BIG_TO_SMALL);
             position+=2;
 
             //количество программ в комплексе 1 байт
