@@ -255,9 +255,18 @@ public class Test
             public void onDetachDevice() {
                 System.out.println("Device disconnected");
             }
+
+            @Override
+            public void onFailure(USBHelper.USBException e) {
+
+            }
         });
 
-        USBHelper.startHotPlugListener(2);
+        try {
+            USBHelper.startHotPlugListener();
+        } catch (USBHelper.USBException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             System.in.read();
@@ -265,9 +274,13 @@ public class Test
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            USBHelper.stopHotPlugListener();
-
-            USBHelper.closeContext();
+            try {
+                USBHelper.stopHotPlugListener();
+            } catch (USBHelper.USBException e) {
+                throw new RuntimeException(e);
+            }finally {
+                USBHelper.closeContext();
+            }
 
         }
 

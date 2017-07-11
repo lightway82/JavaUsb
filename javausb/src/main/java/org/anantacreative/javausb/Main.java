@@ -1,9 +1,9 @@
 package org.anantacreative.javausb;
 
 import org.anantacreative.javausb.Biofon.Biofon;
-import org.anantacreative.javausb.Biofon.BiofonBinaryFile;
 import org.anantacreative.javausb.USB.PlugDeviceListener;
 import org.anantacreative.javausb.USB.USBHelper;
+import org.hid4java.HidDevice;
 
 import java.io.IOException;
 
@@ -23,10 +23,53 @@ public class Main {
             @Override
             public void onAttachDevice() {
                 System.out.println("Устройство присобачили");
+/*
+
                 try {
-                    BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
-                    System.out.println(biofonBinaryFile);
+
+                    Biofon.writeToDevice(Test.testData(),true);
+                    Thread.sleep(1000);
+
+                        BiofonBinaryFile biofonBinaryFile = Biofon.readFromDevice(true);
+                        System.out.println(biofonBinaryFile);
+
+                } catch (BiofonBinaryFile.MaxBytesBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonComplex.ZeroCountProgramBoundException e) {
+                    e.printStackTrace();
+                } catch (Biofon.WriteToDeviceException e) {
+                    e.printStackTrace();
+                } catch (BiofonComplex.MaxTimeByFreqBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonComplex.MaxPauseBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonProgram.MaxProgramIDValueBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonProgram.MaxFrequenciesBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonProgram.MinFrequenciesBoundException e) {
+                    e.printStackTrace();
+                } catch (BiofonComplex.MaxCountProgramBoundException e) {
+                    e.printStackTrace();
                 } catch (Biofon.ReadFromDeviceException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                */
+                try {
+                    for(int i=0;i<100; i++){
+                        Thread.sleep(1000);
+                        System.out.println(i);
+                        HidDevice device = USBHelper.findDevice(Biofon.vendorId, Biofon.productId);
+                        if(device !=null) {
+                            USBHelper.openDevice(device);
+                            device.close();
+                        }else throw new RuntimeException();
+                    }
+                } catch (USBHelper.USBException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -35,9 +78,18 @@ public class Main {
             public void onDetachDevice() {
                 System.out.println("Устройство отсобачили");
             }
+
+            @Override
+            public void onFailure(USBHelper.USBException e) {
+                e.printStackTrace();
+            }
         });
 
-        USBHelper.startHotPlugListener(2);
+        try {
+            USBHelper.startHotPlugListener();
+        } catch (USBHelper.USBException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             System.in.read();
@@ -45,9 +97,13 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            USBHelper.stopHotPlugListener();
-
-            USBHelper.closeContext();
+            try {
+                USBHelper.stopHotPlugListener();
+            } catch (USBHelper.USBException e) {
+                throw new RuntimeException(e);
+            }finally {
+                USBHelper.closeContext();
+            }
 
         }
 

@@ -133,17 +133,13 @@
             <scope>provided</scope>
         </dependency>
 
-            <dependency>
-                <groupId>org.usb4java</groupId>
-                <artifactId>usb4java</artifactId>
-                <version>1.2.0</version>
-            </dependency>
-
         <dependency>
-            <groupId>org.usb4java</groupId>
-            <artifactId>usb4java-javax</artifactId>
-            <version>1.2.0</version>
+            <groupId>org.hid4java</groupId>
+            <artifactId>hid4java</artifactId>
+            <version>0.5.0</version>
         </dependency>
+
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

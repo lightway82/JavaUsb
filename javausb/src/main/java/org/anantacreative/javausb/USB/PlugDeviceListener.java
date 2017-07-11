@@ -8,4 +8,5 @@ public interface PlugDeviceListener{
 
     void onAttachDevice();
     void onDetachDevice();
+    void onFailure(USBHelper.USBException e);
 }

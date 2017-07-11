@@ -1,5 +1,7 @@
 package org.anantacreative.javausb.Biofon;
 
+import org.anantacreative.javausb.USB.ByteHelper;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -7,8 +9,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.anantacreative.javausb.USB.ByteHelper.*;
-
+import static org.anantacreative.javausb.USB.ByteHelper.byteArray1ToInt;
+import static org.anantacreative.javausb.USB.ByteHelper.byteArray4ToInt;
+import static org.anantacreative.javausb.USB.ByteHelper.intToByteList;
 
 public class BiofonProgram {
     private List<Double> frequencies = new ArrayList<>();
@@ -54,7 +57,7 @@ public class BiofonProgram {
 
             for (int i = 0; i < countFreq; i++) {
 
-                frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteOrder.BIG_TO_SMALL));
+                frequenciesInDeviceFormat.add(byteArray4ToInt(programInBytes, position, ByteHelper.ByteOrder.BIG_TO_SMALL));
                 position += FREQ_NUM_BYTES;//4 байта
 
             }
@@ -135,7 +138,7 @@ public class BiofonProgram {
 
         res.add((byte) frequencies.size());
         for (Integer freq : frequenciesInDeviceFormat) {
-            res.addAll(intToByteList(freq, ByteOrder.BIG_TO_SMALL));
+            res.addAll(intToByteList(freq, ByteHelper.ByteOrder.BIG_TO_SMALL));
         }
 
 
