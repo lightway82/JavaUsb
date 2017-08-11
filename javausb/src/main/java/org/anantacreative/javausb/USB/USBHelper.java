@@ -7,46 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Обязательна инициализация initContext()
- * Контекст статческий.
- * Если был вызван closeContext(), то требуется переинициализация
- * <pre><code>
-        Device device = USBHelper.findDevice(vendorId, productId);
-        if(device==null) {
-        System.out.println("Устройство не обнаружено");
-        System.exit(0);
-        }
-        USBHelper.dumpDevice(device);
 
-
-        USBHelper.addPlugEventHandler(productId, vendorId, new USBHelper.PlugDeviceListener() {
-        @Override
-        public void onAttachDevice(Device device) {
-        System.out.println("Устройство присобачили");
-        }
-
-        @Override
-        public void onDetachDevice(Device device) {
-        System.out.println("Устройство отсобачили");
-        }
-        });
-
-        USBHelper.startHotPlugListener();
-
-        try {
-        System.in.read();
-        System.out.println("Выкл");
-        } catch (IOException e) {
-        e.printStackTrace();
-        }finally {
-        USBHelper.stopHotPlugListener();
-        USBHelper.closeContext();
-        }
- </code></pre>
- *
- *
- */
 public class USBHelper{
 
     private static   HidServices hidService=null;
@@ -75,7 +36,7 @@ public class USBHelper{
     public static void initContext() throws USBException {
 
         HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
-        hidServicesSpecification.setAutoShutdown(true);
+        hidServicesSpecification.setAutoShutdown(false);
         hidServicesSpecification.setScanInterval(500);
         hidServicesSpecification.setPauseInterval(5000);
         hidServicesSpecification.setScanMode(ScanMode.SCAN_AT_FIXED_INTERVAL_WITH_PAUSE_AFTER_WRITE);
@@ -92,13 +53,13 @@ public class USBHelper{
         HidDevice device;
         for (PlugListenerContainer container : plugDeviceListenerList) {
              device = findDevice(container.getVid(), container.getPid());
-             if(device!=null) container.getPlugDeviceListener().onAttachDevice();
+             if(device!=null) container.getPlugDeviceListener().attachDevice(device);
         }
 
     }
 
     /**
-     * Поиск устройства по идентификаторам
+     * Поиск устройства по идентификаторам. Устройство не открывается
      * @param vendorId
      * @param productId
      * @return Вернет HidDevice или null если ничего не найдено
@@ -107,7 +68,14 @@ public class USBHelper{
     public static HidDevice findDevice(int vendorId, int productId) throws USBException {
         HidDevice hidDevice = null;
         try{
-            hidDevice = hidService.getHidDevice(vendorId, productId, null);
+           // hidDevice = hidService.getHidDevice(vendorId, productId, null);
+            List<HidDevice> devices = hidService.getAttachedHidDevices();
+            for (HidDevice device : devices) {
+                if (device.isVidPidSerial(vendorId, productId, null)) {
+                    hidDevice = device;
+                    break;
+                }
+            }
         }catch (Exception e){
             throw new USBException("Error find device",e);
         }
@@ -123,7 +91,6 @@ public class USBHelper{
      */
     public static void dumpDevice(final HidDevice device) throws USBException {
         System.out.println(device.toString());
-
     }
 
     /**
@@ -163,7 +130,7 @@ public class USBHelper{
     public synchronized static void startHotPlugListener() throws USBException {
         if(hidService == null) return;
         try {
-           // checkConnectedDevices();
+            checkConnectedDevices();
             hidService.start();
         }catch (Exception e){
             throw new USBException("Error start listen", e);
@@ -195,7 +162,7 @@ public class USBHelper{
             int vid = event.getHidDevice().getVendorId();
             int pid = event.getHidDevice().getProductId();
             plugDeviceListenerList.forEach(el->{
-            if(el.checkID(pid ,vid))el.getPlugDeviceListener().onAttachDevice();
+            if(el.checkID(pid ,vid))el.getPlugDeviceListener().attachDevice(event.getHidDevice());
             });
         }
 
@@ -205,7 +172,7 @@ public class USBHelper{
             int vid = event.getHidDevice().getVendorId();
             int pid = event.getHidDevice().getProductId();
             plugDeviceListenerList.forEach(el->{
-                if(el.checkID(pid ,vid))el.getPlugDeviceListener().onDetachDevice();
+                if(el.checkID(pid ,vid))el.getPlugDeviceListener().detachDevice(event.getHidDevice());
             });
         }
 
@@ -215,7 +182,7 @@ public class USBHelper{
             int vid = event.getHidDevice().getVendorId();
             int pid = event.getHidDevice().getProductId();
             plugDeviceListenerList.forEach(el->{
-                if(el.checkID(pid ,vid))el.getPlugDeviceListener().onFailure(new USBException("Device vid="+vid+" pid="+vid+ " error!  " +event.getHidDevice().getLastErrorMessage()));
+                if(el.checkID(pid ,vid))el.getPlugDeviceListener().failure(new USBException("Device vid="+vid+" pid="+vid+ " error!  " +event.getHidDevice().getLastErrorMessage()));
             });
         }
     }
@@ -239,7 +206,7 @@ public class USBHelper{
             }
 
         }catch (Exception e){
-            throw  new USBException("Error opening device",e);
+            throw  new USBException("Error opening device");
         }
 
      return device;
@@ -253,7 +220,7 @@ public class USBHelper{
                 if(!device.open()) throw new Exception();
             }
         }catch (Exception e){
-            throw  new USBException("Error opening device",e);
+            throw  new USBException("Error opening device");
         }
 
         return device;
@@ -266,9 +233,9 @@ public class USBHelper{
      */
     public static void closeDevice(HidDevice device) throws USBException {
         try{
-            device.close();
+           if(device!=null)device.close();
         }catch (Exception e){
-            throw  new USBException("Error opening device",e);
+            throw  new USBException("Error closing device",e);
         }
     }
 

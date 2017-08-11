@@ -2,7 +2,7 @@ package org.anantacreative.javausb;
 
 import org.anantacreative.javausb.USB.PlugDeviceListener;
 import org.anantacreative.javausb.USB.USBHelper;
-import org.anantacreative.javausb.m2.M2;
+import org.anantacreative.javausb.m2.*;
 import org.hid4java.HidDevice;
 
 import java.io.IOException;
@@ -23,26 +23,39 @@ public class Main2 {
 
         USBHelper.addPlugEventHandler(M2.productId, M2.vendorId, new PlugDeviceListener() {
             @Override
-            public void onAttachDevice() {
+            public void onAttachDevice(HidDevice device) {
                 System.out.println("Device connected");
-/*
+
+
+
+                try {
+                    USBHelper.dumpDevice(device);
+                } catch (USBHelper.USBException e) {
+                    e.printStackTrace();
+                }
+
+
                 try {
 
 
-                    System.out.println("Device read name: "+M2.readDeviceName(true));
+                    System.out.println("Device read name: " + M2.readDeviceName(true));
 
                     System.out.println("Device read data: ");
-                    M2BinaryFile biofonBinaryFile = M2.readFromDevice(true);
-                    if(biofonBinaryFile.getRawReadedData()!=null)
-                    for (int i=0;i<biofonBinaryFile.getRawReadedData().length;i++) {
+                     M2BinaryFile biofonBinaryFile = M2.readFromDevice(true);
+                     biofonBinaryFile = M2.readFromDevice(true);
+                     biofonBinaryFile = M2.readFromDevice(true);
+                    if (biofonBinaryFile.getRawReadedData() != null) System.out.println(biofonBinaryFile);
+                       /* for (int i = 0; i < biofonBinaryFile.getRawReadedData().length; i++) {
+                            System.out.print(biofonBinaryFile.getRawReadedData()[i] < 0 ? biofonBinaryFile.getRawReadedData()[i] + 256 : biofonBinaryFile
+                                    .getRawReadedData()[i]);
+                            System.out.print(", ");
+                        }
+                        */
 
-                        System.out.print(biofonBinaryFile.getRawReadedData()[i]<0?biofonBinaryFile.getRawReadedData()[i]+256:biofonBinaryFile.getRawReadedData()[i]);
-                        System.out.print(", ");
-                    }
                     System.out.println("");
 
 
-
+/*
                    System.out.println("CREATE AND WRITE DATA");
                    Test test=new Test();
                     M2BinaryFile binaryFile = test.testData();
@@ -55,30 +68,15 @@ public class Main2 {
 
                     System.out.println("COMPLETED!");
 
-
-
-                }  catch (M2Program.ZeroValueFreqException e) {
-                    e.printStackTrace();
-                } catch (M2Complex.MaxPauseBoundException e) {
-                    e.printStackTrace();
-                } catch (M2BinaryFile.MaxBytesBoundException e) {
-                    e.printStackTrace();
-                } catch (M2Program.MaxProgramIDValueBoundException e) {
-                    e.printStackTrace();
-                } catch (M2Complex.MaxCountProgramBoundException e) {
-                    e.printStackTrace();
-                } catch (M2Program.MinFrequenciesBoundException e) {
-                    e.printStackTrace();
-                } catch (LanguageDevice.NoLangDeviceSupported noLangDeviceSupported) {
-                    noLangDeviceSupported.printStackTrace();
-                } catch (M2Complex.ZeroCountProgramBoundException e) {
-                    e.printStackTrace();
-                } catch (M2Complex.MaxTimeByFreqBoundException e) {
-                    e.printStackTrace();
+*/
                 } catch (M2.WriteToDeviceException e) {
                     e.printStackTrace();
-                }
-                */
+                } catch (M2.ReadFromDeviceException e) {
+                    e.printStackTrace();
+                }catch (Exception e){e.printStackTrace();}
+
+
+/*
                 try {
         for(int i=0;i<100; i++){
             System.out.println(i);
@@ -92,7 +90,7 @@ public class Main2 {
                     e.printStackTrace();
                 }
 
-  /*
+
                 try {
                     HidDevice device = USBHelper.findDevice(M2.vendorId, M2.productId);
 
@@ -127,7 +125,7 @@ public class Main2 {
             }
 
             @Override
-            public void onDetachDevice() {
+            public void onDetachDevice(HidDevice device) {
                 System.out.println("Device disconnected");
             }
 
@@ -156,9 +154,6 @@ public class Main2 {
             }finally {
                 USBHelper.closeContext();
             }
-
-
-
         }
 
     }

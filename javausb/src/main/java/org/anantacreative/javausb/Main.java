@@ -21,7 +21,7 @@ public class Main {
 
         USBHelper.addPlugEventHandler(Biofon.productId, Biofon.vendorId, new PlugDeviceListener() {
             @Override
-            public void onAttachDevice() {
+            public void onAttachDevice(HidDevice device) {
                 System.out.println("Устройство присобачили");
 /*
 
@@ -56,7 +56,7 @@ public class Main {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                */
+
                 try {
                     for(int i=0;i<100; i++){
                         Thread.sleep(1000);
@@ -72,10 +72,11 @@ public class Main {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                */
             }
 
             @Override
-            public void onDetachDevice() {
+            public void onDetachDevice(HidDevice device) {
                 System.out.println("Устройство отсобачили");
             }
 

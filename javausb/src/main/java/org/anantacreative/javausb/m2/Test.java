@@ -3,6 +3,7 @@ package org.anantacreative.javausb.m2;
 
 import org.anantacreative.javausb.USB.PlugDeviceListener;
 import org.anantacreative.javausb.USB.USBHelper;
+import org.hid4java.HidDevice;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -193,7 +194,7 @@ public class Test
 
         USBHelper.addPlugEventHandler(M2.productId, M2.vendorId, new PlugDeviceListener() {
             @Override
-            public void onAttachDevice() {
+            public void onAttachDevice(HidDevice device) {
                 System.out.println("Device connected");
                 try {
 
@@ -252,7 +253,7 @@ public class Test
             }
 
             @Override
-            public void onDetachDevice() {
+            public void onDetachDevice(HidDevice device) {
                 System.out.println("Device disconnected");
             }
 

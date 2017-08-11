@@ -35,6 +35,7 @@ public class M2
         M2BinaryFile m2BinaryFile = null;
         try {
             device = USBHelper.openDevice(productId, vendorId);
+            if(device == null) throw new ReadFromDeviceException(new NullPointerException("Device == NULL"));
             byte[] commandRead = new byte[DATA_PACKET_SIZE];
             commandRead[0]=READ_COMMAND;
             if(debug)printPacket("Reading command",  commandRead);
@@ -63,7 +64,7 @@ public class M2
             int realReading;
             for(int i=0;i<packets;i++){
                 //читаем
-                realReading = USBHelper.read(device, data, REQUEST_TIMEOUT_MS);
+                realReading = USBHelper.read(device, data, 200);
                 if(realReading<DATA_PACKET_SIZE) throw new Exception("Прочитанный пакет меньше "+DATA_PACKET_SIZE);
                 copyToBuffer(deviceData,data, realReading, i*DATA_PACKET_SIZE);
 
@@ -121,6 +122,7 @@ public class M2
 
 
             device = USBHelper.openDevice(productId, vendorId);
+            if(device == null) throw new ReadFromDeviceException(new NullPointerException("Device == NULL"));
             byte[] commandWrite = new byte[DATA_PACKET_SIZE];
             commandWrite[0]=READ_DEVICE_NAME;
 
@@ -182,6 +184,7 @@ public class M2
 
 
             device = USBHelper.openDevice(productId, vendorId);
+            if(device == null) throw new ReadFromDeviceException(new NullPointerException("Device == NULL"));
             byte[] commandWrite = new byte[DATA_PACKET_SIZE];
             commandWrite[0]=WRITE_COMMAND;
 
@@ -215,7 +218,7 @@ public class M2
             //запись всего пакета в прибор по 64 байта. Нужно не забыть проверять ответ и статус записи, чтобы отловить ошибки
             for(int i=0;i < packets;i++){
 
-                USBHelper.write(device, Arrays.copyOfRange(dataToWrite,DATA_PACKET_SIZE*i,DATA_PACKET_SIZE*i+DATA_PACKET_SIZE));      //читаем
+                USBHelper.write(device, Arrays.copyOfRange(dataToWrite,DATA_PACKET_SIZE*i,DATA_PACKET_SIZE*i+DATA_PACKET_SIZE));
 
                 if(debug)System.out.println("N packet =" + (i+1));
             }
@@ -245,7 +248,7 @@ public class M2
      * @throws USBHelper.USBException
      */
     private static Response readResponseBuffer( HidDevice device, int timeout,  boolean debug) throws USBHelper.USBException {
-
+        if(device == null) throw new USBHelper.USBException("Device == NULL");
         if(debug)System.out.print("READ RESPONSE...");
          byte[] bytes = new byte[DATA_PACKET_SIZE];
         int read = USBHelper.read(device, bytes, timeout);
@@ -269,6 +272,7 @@ public class M2
         try{
 
             device = USBHelper.openDevice(productId, vendorId);
+            if(device == null) throw new ReadFromDeviceException(new NullPointerException("Device == NULL"));
             byte[] commandWrite = new byte[DATA_PACKET_SIZE];
             commandWrite[0]=CLEAR_COMMAND;
 
@@ -304,12 +308,12 @@ public class M2
         int counter=0;
         USBHelper.USBException ex=null;
         Response  response=null;
-        while(counter<3){
+        while(counter<2){
             try {
                 System.out.println("Try "+counter);
                 USBHelper.write(device, commandWrite);
                 response = readResponseBuffer(device,timeoutRead, debug);
-                counter=4;
+                counter=3;
             }catch (USBHelper.USBException e){
                 ex = e;
                 System.out.println("Try not complete"+counter);
