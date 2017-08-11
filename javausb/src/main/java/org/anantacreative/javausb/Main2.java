@@ -25,16 +25,25 @@ public class Main2 {
             @Override
             public void onAttachDevice(HidDevice device) {
                 System.out.println("Device connected");
-
-
-
+/*
+                Test test=new Test();
                 try {
-                    USBHelper.dumpDevice(device);
-                } catch (USBHelper.USBException e) {
+                    M2.clearDevice(true);
+                    //M2.writeToDevice(test.testData(),1,true) ;
+                    System.out.println("DDDDD");
+                } catch (M2.WriteToDeviceException e) {
                     e.printStackTrace();
                 }
-
-
+                */
+                    try {
+                    USBHelper.dumpDevice(device);
+                    System.out.println("Device read name: " + M2.readDeviceName(true));
+                } catch (USBHelper.USBException e) {
+                    e.printStackTrace();
+                } catch (M2.WriteToDeviceException e) {
+                    e.printStackTrace();
+                }
+/*
                 try {
 
 
@@ -45,30 +54,10 @@ public class Main2 {
                      biofonBinaryFile = M2.readFromDevice(true);
                      biofonBinaryFile = M2.readFromDevice(true);
                     if (biofonBinaryFile.getRawReadedData() != null) System.out.println(biofonBinaryFile);
-                       /* for (int i = 0; i < biofonBinaryFile.getRawReadedData().length; i++) {
-                            System.out.print(biofonBinaryFile.getRawReadedData()[i] < 0 ? biofonBinaryFile.getRawReadedData()[i] + 256 : biofonBinaryFile
-                                    .getRawReadedData()[i]);
-                            System.out.print(", ");
-                        }
-                        */
 
                     System.out.println("");
 
 
-/*
-                   System.out.println("CREATE AND WRITE DATA");
-                   Test test=new Test();
-                    M2BinaryFile binaryFile = test.testData();
-
-                    System.out.println("Writed data:");
-
-                    System.out.println("");
-
-                    M2.writeToDevice(binaryFile,1,true);
-
-                    System.out.println("COMPLETED!");
-
-*/
                 } catch (M2.WriteToDeviceException e) {
                     e.printStackTrace();
                 } catch (M2.ReadFromDeviceException e) {
@@ -76,7 +65,7 @@ public class Main2 {
                 }catch (Exception e){e.printStackTrace();}
 
 
-/*
+
                 try {
         for(int i=0;i<100; i++){
             System.out.println(i);
