@@ -1,7 +1,6 @@
 package org.anantacreative.javausb;
 
 
-import org.anantacreative.javausb.USB.USBHelper;
 import org.hid4java.*;
 import org.hid4java.event.HidServicesEvent;
 
@@ -101,7 +100,7 @@ public class TestUSB implements HidServicesListener {
             int val = hidDevice.write(commandWrite, commandWrite.length, (byte) 0x00);
              System.out.println("Num  bytes: " + val);
             if (val < 0)  throw new RuntimeException();
-            byte[] bytes = new byte[65];
+            byte[] bytes = new byte[64];
             int read = hidDevice.read(bytes, 10000);
                 System.out.println("Num  bytes: " + read);
             if (val < 0)  throw new RuntimeException();
